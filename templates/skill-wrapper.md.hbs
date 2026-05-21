@@ -9,8 +9,18 @@ Generated wrapper for Copilot projection.
 
 Source: `{{source}}`
 Capability: {{capability}}
+Canonical SHA-256: {{canonicalSha256}}
 Support: {{support}}
 
 {{body}}
 
 Keep provider-specific invocation syntax in generated wrappers. Canonical `.agents/skills` text stays provider-neutral.
+
+
+## Canonical skill text
+
+The provider wrapper must preserve this canonical behavior from `{{canonicalPath}}`:
+
+```md
+{{canonicalText}}
+```

@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { pathToFileURL } from "node:url";
 import { findCapability, loadCatalogBundle, validateCatalogBundle } from "./catalog.js";
 import { inspectProject } from "./project.js";
 
@@ -104,10 +105,10 @@ export async function runCli(argv = process.argv.slice(2)): Promise<CliResult> {
 
   if (group === "jira:dry-run") {
     const jira = await import("./jira.js") as unknown as Record<string, any>;
+    const config = typeof jira.discoverJiraConfig === "function" ? jira.discoverJiraConfig({ cwd: flagValue(argv, "--root") ?? process.cwd() }) : undefined;
     if (typeof jira.formatJiraDryRun === "function") {
-      return { ok: true, message: jira.formatJiraDryRun() as string };
+      return { ok: true, message: jira.formatJiraDryRun(config) as string };
     }
-    const config = typeof jira.discoverJiraConfig === "function" ? jira.discoverJiraConfig({ root: flagValue(argv, "--root") ?? ".." }) : undefined;
     const payloads = [
       typeof jira.createIssuePayload === "function" ? jira.createIssuePayload(config, { summary: "Phase 1 MVP tracking ticket", description: "Prepared by oh-my-copilot dry-run adapter." }) : undefined,
       typeof jira.commentPayload === "function" ? jira.commentPayload(config, "<ISSUE-KEY>", "Verification evidence goes here.") : undefined,
@@ -153,6 +154,12 @@ export async function runCli(argv = process.argv.slice(2)): Promise<CliResult> {
       const isFileInput = /\.[a-z0-9]+$/i.test(value);
       const inputPath = isFileInput ? await resolveExistingInputPath(value) : undefined;
       const ticket = inputPath ? jira.readTicketInput(inputPath) : undefined;
+      if (operation === "link" && !flagValue(argv, "--link-target")) {
+        return { ok: false, exitCode: 1, output: json ? { ok: false, error: "jira apply --link requires --link-target <issue-key>" } : undefined, message: "jira apply --link requires --link-target <issue-key>" };
+      }
+      if (operation === "create" && !ticket) {
+        return { ok: false, exitCode: 1, output: json ? { ok: false, error: "jira apply create requires a readable plan/ticket file" } : undefined, message: "jira apply create requires a readable plan/ticket file" };
+      }
       const result = await jira.applyJiraOperation({
         operation,
         target: inputPath ? undefined : value,
@@ -170,6 +177,8 @@ export async function runCli(argv = process.argv.slice(2)): Promise<CliResult> {
   return { ok: false, exitCode: 1, message: `Unknown command.\n\n${help()}` };
 }
 
-const result = await runCli();
-printResult(result, process.argv.includes("--json"));
-process.exitCode = result.exitCode ?? (result.ok ? 0 : 1);
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  const result = await runCli();
+  printResult(result, process.argv.includes("--json"));
+  process.exitCode = result.exitCode ?? (result.ok ? 0 : 1);
+}

@@ -1,5 +1,6 @@
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { createHash } from 'node:crypto';
+import { existsSync, readFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
 import { loadCatalogBundle, type SkillProjection } from './catalog.js';
 import { packageRootFromImportMeta } from './project.js';
 
@@ -45,7 +46,22 @@ function fallbackFor(skill: SkillProjection): string {
   return 'Missing source skill: report the missing path and stop before inventing provider-specific behavior.';
 }
 
-function varsFor(skill: SkillProjection, command: string, aliasOf?: string): Record<string, string> {
+function canonicalSkill(skill: SkillProjection, packageRoot: string): { path: string; text: string; sha256: string } {
+  const workspaceRoot = dirname(packageRoot);
+  const canonicalPath = resolve(workspaceRoot, skill.sourcePath);
+  if (!existsSync(canonicalPath)) {
+    throw new Error(`missing canonical skill source for ${skill.name}: ${skill.sourcePath}`);
+  }
+  const text = readFileSync(canonicalPath, 'utf8');
+  return {
+    path: canonicalPath,
+    text,
+    sha256: createHash('sha256').update(text).digest('hex'),
+  };
+}
+
+function varsFor(skill: SkillProjection, command: string, packageRoot: string, aliasOf?: string): Record<string, string> {
+  const canonical = canonicalSkill(skill, packageRoot);
   return {
     name: command,
     command,
@@ -53,6 +69,9 @@ function varsFor(skill: SkillProjection, command: string, aliasOf?: string): Rec
     description: aliasOf ? `Alias for /${aliasOf}` : skill.summary,
     source: skill.sourcePath,
     canonicalPath: skill.sourcePath,
+    canonicalAbsolutePath: canonical.path,
+    canonicalSha256: canonical.sha256,
+    canonicalText: canonical.text,
     support: aliasOf ? 'alias' : skill.projection,
     capability: skill.capabilityId,
     capabilityIds: skill.capabilityId,
@@ -81,7 +100,7 @@ export function projectCopilotCommands(): ProjectionFile[] {
   function emitCommand(skill: SkillProjection, command: string, aliasOf?: string): void {
     if (emittedCommands.has(command)) return;
     emittedCommands.add(command);
-    const vars = varsFor(skill, command, aliasOf);
+    const vars = varsFor(skill, command, packageRoot, aliasOf);
     files.push({
       path: `.github/copilot/commands/${command}.md`,
       content: render(commandTemplate, vars),

@@ -233,7 +233,7 @@ export function readTicketInput(path: string): JiraTicketInput {
 }
 
 export function renderCreateIssue(ticket: JiraTicketInput, config: JiraConfig = discoverJiraConfig()): JiraRenderedIssue {
-  const projectKey = config.projectKey ?? 'PROJECT';
+  const projectKey = config.projectKey ?? '<PROJECT-KEY>';
   const fields: Record<string, unknown> = {
     project: { key: projectKey },
     issuetype: { name: ticket.issueType ?? config.defaultIssueType },
@@ -337,6 +337,7 @@ function humanActionFor(operation: JiraOperationName, target: string): string {
 export function canRunLive(config: JiraConfig, operation: JiraOperationName): boolean {
   if (config.mode !== 'live') return false;
   if (!config.baseUrl || !config.email || !config.apiToken) return false;
+  if (operation === 'create' && !config.projectKey) return false;
   const configured = config.operations[operation];
   return configured === true || configured === 'discover';
 }
@@ -465,6 +466,7 @@ function fallbackReason(config: JiraConfig, operation: JiraOperationName, explic
   if (explicitDryRun) return 'dry-run requested; no live Jira write was attempted';
   if (config.mode !== 'live') return 'Jira mode is dry-run; no live Jira write was attempted';
   if (!config.baseUrl || !config.email || !config.apiToken) return 'Jira credentials/config are incomplete';
+  if (operation === 'create' && !config.projectKey) return 'Jira project key is missing; live create was not attempted';
   if (!config.operations[operation]) return `Jira ${operation} operation is disabled in config`;
   return `Jira ${operation} requires discovery or live execution was not available`;
 }

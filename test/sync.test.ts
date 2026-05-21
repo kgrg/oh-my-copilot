@@ -29,4 +29,17 @@ describe('Copilot projection dry-run', () => {
     }
     expect(output).toMatch(/dry-run/i);
   });
+
+  it('embeds canonical skill content and uses dedicated handoff sources', () => {
+    const files = projectCopilotCommands();
+    const grillSkill = files.find((file) => file.path === '.github/copilot/skills/grill/SKILL.md');
+    const teamCommand = files.find((file) => file.path === '.github/copilot/commands/team.md');
+    const ralphCommand = files.find((file) => file.path === '.github/copilot/commands/ralph.md');
+
+    expect(grillSkill?.content).toContain('## Canonical skill text');
+    expect(grillSkill?.content).toContain('Explore existing code, docs, issues, or plans before asking');
+    expect(teamCommand?.content).toContain('Source: .agents/skills/team/SKILL.md');
+    expect(ralphCommand?.content).toContain('Source: .agents/skills/ralph/SKILL.md');
+    expect(teamCommand?.content).toContain('Canonical SHA-256:');
+  });
 });

@@ -1,4 +1,4 @@
-import { existsSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
@@ -40,6 +40,14 @@ export function packageRootFromImportMeta(importMetaUrl: string): string {
   return found ?? directRoot;
 }
 
+export function packageRoot(...segments: string[]): string {
+  return resolve(findUp(process.cwd(), "package.json") ?? process.cwd(), ...segments);
+}
+
+export function workspaceRoot(...segments: string[]): string {
+  return resolve(dirname(packageRoot()), ...segments);
+}
+
 function inferPackageRoot(cwd: string): string {
   const localPackage = findUp(cwd, "package.json");
   if (localPackage) {
@@ -54,14 +62,14 @@ function inferPackageRoot(cwd: string): string {
 
 export function resolveProjectPaths(options: { cwd?: string; packageRoot?: string } = {}): ProjectPaths {
   const cwd = resolve(options.cwd ?? process.cwd());
-  const packageRoot = resolve(options.packageRoot ?? inferPackageRoot(cwd));
-  const workspaceRoot = dirname(packageRoot);
+  const resolvedPackageRoot = resolve(options.packageRoot ?? inferPackageRoot(cwd));
+  const resolvedWorkspaceRoot = dirname(resolvedPackageRoot);
   return {
     cwd,
-    packageRoot,
-    workspaceRoot,
-    catalogDir: join(packageRoot, "catalog"),
-    defaultSkillsRoot: join(workspaceRoot, ".agents", "skills"),
+    packageRoot: resolvedPackageRoot,
+    workspaceRoot: resolvedWorkspaceRoot,
+    catalogDir: join(resolvedPackageRoot, "catalog"),
+    defaultSkillsRoot: join(resolvedWorkspaceRoot, ".agents", "skills"),
   };
 }
 
@@ -73,6 +81,39 @@ export function inspectProject(options: { cwd?: string; packageRoot?: string } =
     hasCatalog: existsSync(paths.catalogDir),
     hasPackageJson: existsSync(join(paths.packageRoot, "package.json")),
   };
+}
+
+export function pathExists(path: string): boolean {
+  return existsSync(path);
+}
+
+export function readText(path: string): string {
+  return readFileSync(path, "utf8");
+}
+
+export function listSkillNames(root = workspaceRoot()): string[] {
+  const skillsDir = join(root, ".agents", "skills");
+  if (!existsSync(skillsDir)) return [];
+  return readdirSync(skillsDir, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name)
+    .sort();
+}
+
+export function parseFrontmatter(text: string): Record<string, string> {
+  if (!text.startsWith("---")) return {};
+  const end = text.indexOf("\n---", 3);
+  if (end === -1) return {};
+  const frontmatter = text.slice(3, end).trim();
+  const result: Record<string, string> = {};
+  for (const line of frontmatter.split(/\r?\n/)) {
+    const match = line.match(/^([A-Za-z0-9_-]+):\s*(.*)$/);
+    if (!match) continue;
+    const [, key, rawValue] = match;
+    if (!key || rawValue === undefined) continue;
+    result[key] = rawValue.replace(/^['"]|['"]$/g, "");
+  }
+  return result;
 }
 
 export function toFileUrl(path: string): string {

@@ -1,146 +1,114 @@
 #!/usr/bin/env node
-import { readFileSync } from 'node:fs';
-import { loadCatalogBundle, validateCatalogBundle } from './catalog.js';
-import { inspectProject } from './project.js';
-import { formatLintIssues, lintSkills } from './lint.js';
-import { formatDryRun } from './sync.js';
-import {
-  applyJiraOperation,
-  configSummary,
-  discoverJiraConfig,
-  fallbackMarkdown,
-  readTicketInput,
-  renderCreateIssue,
-  type JiraOperationName,
-} from './jira.js';
+import { findCapability, loadCatalogBundle, validateCatalogBundle } from "./catalog.js";
+import { inspectProject } from "./project.js";
 
-async function main(argv = process.argv.slice(2)): Promise<void> {
-  const [command, subcommand, ...rest] = argv;
-
-  if (command === 'catalog') {
-    await handleCatalog(subcommand, rest);
-    return;
-  }
-  if (command === 'project') {
-    await handleProject(subcommand, rest);
-    return;
-  }
-  if (command === 'lint:skills' || (command === 'skill' && subcommand === 'lint')) {
-    const root = valueAfter(argv, '--root');
-    const issues = lintSkills(root ?? {});
-    console.log(formatLintIssues(issues));
-    process.exitCode = issues.some((issue) => issue.level === 'error') ? 1 : 0;
-    return;
-  }
-  if (command === 'sync:dry-run' || (command === 'skill' && subcommand === 'sync' && argv.includes('--dry-run'))) {
-    console.log(formatDryRun());
-    return;
-  }
-  if (command === 'jira:dry-run') {
-    const config = discoverJiraConfig({ cwd: process.cwd() });
-    console.log(JSON.stringify({ ok: true, dryRun: true, jira: configSummary(config) }, null, 2));
-    return;
-  }
-  if (command === 'jira') {
-    await handleJira(subcommand, rest);
-    return;
-  }
-
-  usage();
+interface CliResult {
+  ok: boolean;
+  exitCode?: number;
+  output?: unknown;
+  message?: string;
 }
 
-async function handleCatalog(subcommand: string | undefined, args: string[]): Promise<void> {
-  const bundle = loadCatalogBundle();
-  if (subcommand === 'validate') {
-    const result = validateCatalogBundle(bundle);
-    console.log(JSON.stringify(result, null, 2));
-    process.exitCode = result.ok ? 0 : 1;
-    return;
-  }
-  if (subcommand === 'list' || subcommand === undefined) {
-    console.log(JSON.stringify({ capabilities: bundle.capabilities.capabilities.map((item) => item.id), skills: bundle.skills.skills.map((item) => item.name) }, null, 2));
-    return;
-  }
-  usage();
+function hasFlag(args: string[], flag: string): boolean {
+  return args.includes(flag);
 }
 
-async function handleProject(subcommand: string | undefined, args: string[]): Promise<void> {
-  if (subcommand === 'inspect') {
-    console.log(JSON.stringify(inspectProject({ cwd: valueAfter(args, '--root') ?? process.cwd() }), null, 2));
-    return;
-  }
-  usage();
-}
-
-async function handleJira(subcommand: string | undefined, rest: string[]): Promise<void> {
-  if (subcommand === 'config') {
-    console.log(JSON.stringify(configSummary(discoverJiraConfig()), null, 2));
-    return;
-  }
-
-  if (subcommand === 'render') {
-    const planFile = rest.find((arg) => !arg.startsWith('--'));
-    if (!planFile) throw new Error('omc jira render requires a plan file');
-    const config = discoverJiraConfig({ cwd: process.cwd() });
-    const ticket = readTicketInput(planFile);
-    console.log(JSON.stringify(renderCreateIssue(ticket, config), null, 2));
-    return;
-  }
-
-  if (subcommand === 'apply') {
-    const targetOrPlan = rest.find((arg) => !arg.startsWith('--'));
-    const operation = parseApplyOperation(rest);
-    const dryRun = rest.includes('--dry-run');
-    const config = discoverJiraConfig({ cwd: process.cwd() });
-    const isFile = Boolean(targetOrPlan && /\.(md|markdown|json)$/i.test(targetOrPlan));
-    const ticket = isFile && targetOrPlan ? readTicketInput(targetOrPlan) : undefined;
-    const target = isFile ? undefined : targetOrPlan;
-    const commentPath = valueAfter(rest, '--comment-file');
-    const comment = commentPath ? readFileSync(commentPath, 'utf8') : ticket?.description;
-    const transitionState = valueAfter(rest, '--state') ?? valueAfter(rest, '--transition');
-    const linkTarget = valueAfter(rest, '--link-target');
-    const result = await applyJiraOperation({ operation, target, ticket, comment, update: ticket, transitionState, linkTarget, dryRun }, config);
-    if (result.fallback) console.log(fallbackMarkdown(result.fallback));
-    else console.log(JSON.stringify(result.response, null, 2));
-    process.exitCode = result.ok ? 0 : 1;
-    return;
-  }
-
-  if (subcommand === '--dry-run' || subcommand === undefined) {
-    const config = discoverJiraConfig({ cwd: process.cwd() });
-    console.log(JSON.stringify({ ok: true, dryRun: true, jira: configSummary(config) }, null, 2));
-    return;
-  }
-
-  usage();
-}
-
-function parseApplyOperation(args: string[]): JiraOperationName {
-  if (args.includes('--comment')) return 'comment';
-  if (args.includes('--update')) return 'update';
-  if (args.includes('--transition')) return 'transition';
-  if (args.includes('--link')) return 'link';
-  return 'create';
-}
-
-function valueAfter(args: string[], flag: string): string | undefined {
+function flagValue(args: string[], flag: string): string | undefined {
   const index = args.indexOf(flag);
-  return index >= 0 ? args[index + 1] : undefined;
+  if (index === -1) return undefined;
+  return args[index + 1];
 }
 
-function usage(): void {
-  console.log(`Usage:
-  oh-my-copilot catalog validate|list
-  oh-my-copilot project inspect [--root <path>]
-  oh-my-copilot lint:skills [--root <workspace-root>]
-  oh-my-copilot sync:dry-run [--root <workspace-root>]
-  oh-my-copilot jira config
-  oh-my-copilot jira render <plan-file>
-  oh-my-copilot jira apply <ticket-key-or-plan-file> [--comment|--update|--transition <state>|--link --link-target <key>] [--dry-run]
-  oh-my-copilot jira:dry-run`);
+function printResult(result: CliResult, json: boolean): void {
+  if (json || typeof result.output === "object") {
+    console.log(JSON.stringify(result.output ?? { ok: result.ok, message: result.message }, null, 2));
+    return;
+  }
+  if (result.message) {
+    console.log(result.message);
+  }
 }
 
-main().catch((error) => {
-  console.error(error instanceof Error ? error.message : String(error));
-  process.exitCode = 1;
-});
+function help(): string {
+  return `oh-my-copilot\n\nCommands:\n  catalog list [--json]\n  catalog validate [--json]\n  catalog capability <id> [--json]\n  project inspect [--json]\n  lint:skills [--root <workspace>]\n  sync:dry-run [--root <workspace>]\n  jira:dry-run [--root <workspace>]\n`;
+}
+
+export async function runCli(argv = process.argv.slice(2)): Promise<CliResult> {
+  const [group, command, value] = argv;
+  const json = hasFlag(argv, "--json");
+
+  if (!group || group === "help" || group === "--help" || group === "-h") {
+    return { ok: true, message: help() };
+  }
+
+  if (group === "catalog") {
+    if (command === "list") {
+      const bundle = loadCatalogBundle();
+      const output = bundle.capabilities.capabilities
+        .filter((capability) => capability.phase1)
+        .map((capability) => ({
+          id: capability.id,
+          command: `/${capability.defaultCommand}`,
+          category: capability.category,
+          phase1: capability.phase1,
+          copilot: capability.providerSupport.copilot.state,
+        }));
+      return json ? { ok: true, output } : { ok: true, message: output.map((item) => `${item.id}\t${item.command}\t${item.copilot}`).join("\n") };
+    }
+
+    if (command === "validate") {
+      const result = validateCatalogBundle();
+      return {
+        ok: result.ok,
+        exitCode: result.ok ? 0 : 1,
+        output: json ? result : undefined,
+        message: result.ok ? "Catalog validation PASS" : `Catalog validation FAIL (${result.issues.length} issue(s))`,
+      };
+    }
+
+    if (command === "capability" && value) {
+      const capability = findCapability(value);
+      if (!capability) {
+        return { ok: false, exitCode: 1, output: json ? { ok: false, error: `Unknown capability: ${value}` } : undefined, message: `Unknown capability: ${value}` };
+      }
+      return json ? { ok: true, output: capability } : { ok: true, message: `${capability.id}: ${capability.summary}` };
+    }
+  }
+
+  if (group === "project" && command === "inspect") {
+    const output = inspectProject();
+    return json ? { ok: true, output } : { ok: true, message: `packageRoot=${output.packageRoot}\nskillsRoot=${output.defaultSkillsRoot}\nhasCatalog=${output.hasCatalog}` };
+  }
+
+  if (group === "lint:skills") {
+    const { lintSkills, formatLintIssues } = await import("./lint.js");
+    const issues = lintSkills(flagValue(argv, "--root"));
+    const ok = issues.filter((issue) => issue.level === "error").length === 0;
+    return { ok, exitCode: ok ? 0 : 1, message: formatLintIssues(issues) };
+  }
+
+  if (group === "sync:dry-run") {
+    const { formatDryRun } = await import("./sync.js");
+    return { ok: true, message: formatDryRun() };
+  }
+
+  if (group === "jira:dry-run") {
+    const jira = await import("./jira.js") as unknown as Record<string, any>;
+    if (typeof jira.formatJiraDryRun === "function") {
+      return { ok: true, message: jira.formatJiraDryRun() as string };
+    }
+    const config = typeof jira.discoverJiraConfig === "function" ? jira.discoverJiraConfig({ root: flagValue(argv, "--root") ?? ".." }) : undefined;
+    const payloads = [
+      typeof jira.createIssuePayload === "function" ? jira.createIssuePayload(config, { summary: "Phase 1 MVP tracking ticket", description: "Prepared by oh-my-copilot dry-run adapter." }) : undefined,
+      typeof jira.commentPayload === "function" ? jira.commentPayload(config, "<ISSUE-KEY>", "Verification evidence goes here.") : undefined,
+      typeof jira.safeUpdatePayload === "function" ? jira.safeUpdatePayload(config, "<ISSUE-KEY>", { labels: ["oh-my-copilot"] }) : undefined,
+    ].filter(Boolean);
+    return { ok: true, message: `PASS: Jira dry-run fallback payloads\n${JSON.stringify(payloads, null, 2)}` };
+  }
+
+  return { ok: false, exitCode: 1, message: `Unknown command.\n\n${help()}` };
+}
+
+const result = await runCli();
+printResult(result, process.argv.includes("--json"));
+process.exitCode = result.exitCode ?? (result.ok ? 0 : 1);

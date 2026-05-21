@@ -19,7 +19,7 @@ describe('general skill catalog', () => {
     ]);
 
     const commands = new Set(catalog.skills.flatMap((skill) => skill.slashCommands));
-    expect(commands).toEqual(
+    expect([...commands]).toEqual(
       expect.arrayContaining(['grill', 'grill-me', 'ralplan', 'team', 'ralph', 'verify', 'jira-ticket', 'code-review', 'qa']),
     );
   });

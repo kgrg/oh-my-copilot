@@ -10,7 +10,7 @@ export interface LintIssue {
   file?: string;
 }
 
-const providerRuntimeTerms = ['tmux-only', 'Codex-only', 'Claude-only', 'Copilot-only', 'OMX_TEAM_STATE_ROOT', 'TMUX_PANE'];
+const providerRuntimeTerms = ['tmux-only', 'Codex-only', 'Claude-only', 'OMX_TEAM_STATE_ROOT', 'TMUX_PANE', '.omx', '.agents', '.claude', '.github/copilot'];
 
 function parseFrontmatter(markdown: string): Record<string, string> {
   if (!markdown.startsWith('---\n')) return {};
@@ -67,16 +67,14 @@ export function lintSkills(rootOrOptions: string | { cwd?: string; packageRoot?:
         issues.push({ level: 'warning', code: 'skill.portability', message: `provider-specific wording found: ${term}`, file });
       }
     }
-    if (/\$ralph|\$team|\$ralplan|\.github\/copilot|\.claude-plugin/i.test(body)) {
-      issues.push({ level: 'warning', code: 'skill.provider-syntax', message: 'canonical skill should avoid provider-specific invocation syntax', file });
+    if (/\$[A-Za-z][A-Za-z0-9_-]*|\.github\/copilot|\.claude-plugin|\.agents|\.claude|\.omx/i.test(body)) {
+      issues.push({ level: 'warning', code: 'skill.provider-syntax', message: 'canonical skill should use slash skills and avoid provider/runtime paths', file });
     }
   }
 
   const grillMe = resolve(paths.packageRoot, '.github/skills/grill-me/SKILL.md');
   if (!existsSync(grillMe)) {
-    issues.push({ level: 'error', code: 'alias.missing', message: 'missing grill-me alias skill', file: grillMe });
-  } else if (!readFileSync(grillMe, 'utf8').includes('canonical `grill`')) {
-    issues.push({ level: 'warning', code: 'alias.canonical', message: 'grill-me should point at canonical `grill` skill', file: grillMe });
+    issues.push({ level: 'error', code: 'skill.missing', message: 'missing grill-me skill', file: grillMe });
   }
 
   return issues;

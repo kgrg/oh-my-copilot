@@ -1,13 +1,20 @@
 ---
 name: team
-description: Thin handoff for parallel execution when a real provider team runtime exists; otherwise produce an unsupported handoff brief.
+description: Split an approved plan into parallel lanes for agents or humans. Use with /team when work has independent lanes.
 ---
 
-# team
+# Team
 
-Use when a plan has independent implementation lanes.
+Use `/team` when work has independent lanes.
 
-1. Confirm the plan has clear lanes, owners, risks, and verification commands.
-2. If the current provider exposes a real team runtime, hand off with the full context and evidence requirements.
-3. If no runtime exists, say this is unsupported here and output a handoff brief with lanes, files, tests, and stop criteria.
-4. Do not emulate a durable team runtime inside this skill.
+Do:
+- Require a plan or clear task.
+- Split into lanes with owners, files, and tests.
+- Identify dependencies and conflict risks.
+- Keep it as a coordination brief, not a runtime.
+
+Output:
+- `Lanes`
+- `Shared files`
+- `Order/dependencies`
+- `Verification`

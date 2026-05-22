@@ -2,19 +2,25 @@
 
 The canonical skill source is the repo-local `.github/skills` directory. This is the GitHub Copilot project-skill location, so no `.agents` or `.claude` compatibility layer is needed.
 
-## Canonical skills
+## Canonical lite skills
 
 | Skill | Capability IDs | Purpose |
 | --- | --- | --- |
-| `grill` | `grill`, `research.codebase`, `planning.challenge` | Research local context, then ask one unresolved decision question at a time. |
-| `grill-me` | alias for `grill` | Backwards-compatible entrypoint that delegates to canonical `grill`. |
-| `verify` | `verify` | Collect command evidence, classify PASS/FAIL, and state known gaps. |
-| `jira-ticket` | `jira-ticket`, `tracker.ticket` | Render or apply Jira create/comment/safe-update operations with fallback payloads. |
-| `code-review` | `code-review`, `review.independent` | Portable non-author review contract. |
-| `qa` | `qa`, `qa.behavioral` | Behavior-focused QA evidence gate. |
-| `ralplan` | `ralplan`, `planning.consensus` | Consensus planning handoff. |
-| `team` | `team`, `execution.parallel` | Thin parallel-execution handoff. |
-| `ralph` | `ralph`, `execution.single-owner` | Thin single-owner execution handoff. |
+| `/codebase-research` | `codebase-research`, `research.codebase` | Read repo evidence before planning or asking. |
+| `/grill-me` | `grill-me`, `planning.challenge` | Ask one sharp clarification question when ambiguity remains. |
+| `/ralplan` | `ralplan`, `planning.consensus` | Produce implementation-ready plan, tests, and risks. |
+| `/team` | `team`, `execution.parallel` | Split approved work into parallel lanes. |
+| `/ralph` | `ralph`, `execution.single-owner` | Single-owner execute-fix-verify loop. |
+| `/ultrawork` | `ultrawork`, `execution.parallel` | Batch many independent small tasks. |
+| `/ultraqa` | `ultraqa`, `qa.behavioral` | Adversarial behavior and regression QA. |
+| `/autopilot` | `autopilot`, `execution.autonomous` | Lightweight end-to-end flow across the other skills. |
+| `/code-review` | `code-review`, `review.independent` | Review completed changes before merge or handoff. |
+| `/verify` | `verify`, `verification.evidence` | Prove completion claims with evidence. |
+| `/jira-ticket` | `jira-ticket`, `tracker.ticket` | Render Jira create/comment/safe-update payloads. |
+| `/prototype` | `prototype`, `design.prototype` | Build disposable experiments for design questions. |
+| `/caveman` | `caveman`, `communication.compact` | Ultra-compact response mode. |
+| `/debug` | `debug`, `debug.systematic` | Reproduce, diagnose, fix, and regression-test bugs. |
+| `/tdd` | `tdd`, `testing.tdd` | Red-green-refactor for behavior changes. |
 
 ## Repo-local layout
 
@@ -26,30 +32,29 @@ oh-my-copilot/
 Rules:
 
 - Edit `.github/skills/*/SKILL.md` first.
+- Use `/skill-name` invocation language.
 - Do not create `.agents` or `.claude` skill roots in this repo.
 - Do not generate `.github/copilot/...` wrappers; Copilot reads project skills directly.
 - Keep each `SKILL.md` small: YAML frontmatter (`name`, `description`) plus focused Markdown instructions.
+- Do not add bundled scripts, references, or runtime state to the lite skills yet.
 
 ## Phase 1 flow
 
 ```text
-research.codebase
-  -> planning.challenge when unclear or risky
-  -> planning.consensus
-  -> tracker.ticket when work tracking is requested
-  -> execution.parallel if lanes are independent, otherwise execution.single-owner
-  -> review.independent
-  -> qa.behavioral
-  -> verification evidence
+/codebase-research
+  -> /grill-me when unclear or risky
+  -> /ralplan
+  -> /team if lanes are independent, otherwise /ralph or /ultrawork
+  -> /code-review
+  -> /verify or /ultraqa
+  -> /jira-ticket when tracking is requested
 ```
-
-`team` and `ralph` are thin handoff skills only in this MVP. They should call an available runtime when one exists; otherwise they produce an unsupported handoff with context, lanes, risks, and verification checklist.
 
 ## Portability rules
 
 Canonical `.github/skills/*/SKILL.md` bodies should avoid runtime coupling:
 
-- Do not require tmux panes, `.omx` state, external agent team state, or GitHub Issues.
+- Do not require tmux panes, external agent team state, local orchestration state, or GitHub Issues.
 - Do not embed secrets or Jira credentials.
-- Do not make provider command syntax the only source of truth.
-- Prefer capability language and plain Markdown instructions over long framework-specific prompt text.
+- Do not use `$skill` invocation syntax in Copilot project skills.
+- Prefer slash-skill language and plain Markdown instructions over long framework-specific prompt text.

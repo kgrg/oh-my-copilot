@@ -8,7 +8,7 @@ export interface ProjectionFile {
   content: string;
 }
 
-const REQUIRED_COMMANDS = ['grill', 'grill-me', 'ralplan', 'team', 'ralph', 'verify', 'jira-ticket', 'code-review', 'qa'];
+const REQUIRED_COMMANDS = ['codebase-research', 'grill-me', 'ralplan', 'team', 'ralph', 'ultrawork', 'ultraqa', 'autopilot', 'code-review', 'verify', 'jira-ticket', 'prototype', 'caveman', 'debug', 'tdd'];
 
 function skillSource(command: string, skill: SkillProjection, packageRoot: string): ProjectionFile {
   const directPath = `.github/skills/${command}/SKILL.md`;

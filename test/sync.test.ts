@@ -5,10 +5,12 @@ import path from 'node:path';
 import { formatDryRun, projectCopilotCommands } from '../src/sync.js';
 import { resolveProjectPaths } from '../src/project.js';
 
+const LITE_SKILLS = ['codebase-research', 'grill-me', 'ralplan', 'team', 'ralph', 'ultrawork', 'ultraqa', 'autopilot', 'code-review', 'verify', 'jira-ticket', 'prototype', 'caveman', 'debug', 'tdd'];
+
 function hashCanonicalSkills() {
   const paths = resolveProjectPaths({ cwd: process.cwd() });
   return Object.fromEntries(
-    ['grill', 'grill-me', 'ralplan', 'team', 'ralph', 'verify', 'jira-ticket', 'code-review', 'qa']
+    LITE_SKILLS
       .map((name) => path.join(paths.packageRoot, '.github', 'skills', name, 'SKILL.md'))
       .filter((file) => existsSync(file))
       .map((file) => [file, createHash('sha256').update(readFileSync(file)).digest('hex')]),
@@ -16,29 +18,29 @@ function hashCanonicalSkills() {
 }
 
 describe('Copilot skills dry-run', () => {
-  it('projects Copilot project skills for all MVP commands', () => {
+  it('projects Copilot project skills for all lite slash commands', () => {
     const before = hashCanonicalSkills();
     const files = projectCopilotCommands();
     const after = hashCanonicalSkills();
     const output = formatDryRun(files);
 
     expect(after).toEqual(before);
-    for (const command of ['grill', 'grill-me', 'ralplan', 'team', 'ralph', 'verify', 'jira-ticket', 'code-review', 'qa']) {
+    for (const command of LITE_SKILLS) {
       expect(files.map((file) => file.path)).toContain(`.github/skills/${command}/SKILL.md`);
       expect(output).toContain(`skills/${command}/SKILL.md`);
     }
     expect(output).toMatch(/dry-run/i);
   });
 
-  it('keeps skill bodies in official Copilot skill locations', () => {
+  it('keeps skill bodies short and slash-oriented in official Copilot skill locations', () => {
     const files = projectCopilotCommands();
-    const grillSkill = files.find((file) => file.path === '.github/skills/grill/SKILL.md');
-    const teamSkill = files.find((file) => file.path === '.github/skills/team/SKILL.md');
-    const ralphSkill = files.find((file) => file.path === '.github/skills/ralph/SKILL.md');
+    const research = files.find((file) => file.path === '.github/skills/codebase-research/SKILL.md');
+    const autopilot = files.find((file) => file.path === '.github/skills/autopilot/SKILL.md');
+    const team = files.find((file) => file.path === '.github/skills/team/SKILL.md');
 
-    expect(grillSkill?.content).toContain('Explore existing code, docs, issues, or plans before asking');
-    expect(teamSkill?.content).toContain('Do not emulate a durable team runtime');
-    expect(ralphSkill?.content).toContain('Do not emulate a durable runtime');
-    expect(files.map((file) => file.path).some((path) => path.startsWith('.github/copilot/'))).toBe(false);
+    expect(research?.content).toContain('Evidence');
+    expect(autopilot?.content).toContain('/codebase-research');
+    expect(team?.content).toContain('coordination brief, not a runtime');
+    expect(files.map((file) => file.path).some((filePath) => filePath.startsWith('.github/copilot/'))).toBe(false);
   });
 });

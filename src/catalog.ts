@@ -79,14 +79,21 @@ export interface CatalogValidationResult {
 }
 
 const REQUIRED_PHASE1_CAPABILITIES = [
-  "grill",
+  "codebase-research",
+  "grill-me",
   "ralplan",
   "team",
   "ralph",
-  "jira-ticket",
+  "ultrawork",
+  "ultraqa",
+  "autopilot",
   "code-review",
-  "qa",
   "verify",
+  "jira-ticket",
+  "prototype",
+  "caveman",
+  "debug",
+  "tdd",
 ] as const;
 
 const PROVIDERS: ProviderId[] = ["copilot"];

@@ -4,19 +4,23 @@ import path from 'node:path';
 import { lintSkills } from '../src/lint.js';
 import { resolveProjectPaths } from '../src/project.js';
 
+const LITE_SKILLS = ['codebase-research', 'grill-me', 'ralplan', 'team', 'ralph', 'ultrawork', 'ultraqa', 'autopilot', 'code-review', 'verify', 'jira-ticket', 'prototype', 'caveman', 'debug', 'tdd'];
+
 describe('skill portability lint', () => {
   it('passes committed canonical skills without catalog errors', () => {
     const issues = lintSkills({ cwd: process.cwd() });
     expect(issues.filter((issue) => issue.level === 'error')).toEqual([]);
+    expect(issues.filter((issue) => issue.level === 'warning')).toEqual([]);
   });
 
   it('keeps runtime-specific command examples out of Copilot skills', () => {
     const paths = resolveProjectPaths({ cwd: process.cwd() });
-    for (const name of ['grill', 'grill-me', 'verify', 'jira-ticket', 'code-review', 'qa']) {
+    for (const name of LITE_SKILLS) {
       const skillFile = path.join(paths.packageRoot, '.github', 'skills', name, 'SKILL.md');
       const body = readFileSync(skillFile, 'utf8');
-      expect(body, `${name} avoids external runtime command syntax`).not.toMatch(/\$ralph|\$team|\$ralplan/i);
-      expect(body, `${name} avoids runtime state coupling`).not.toMatch(/OMX_TEAM_STATE_ROOT|TMUX_PANE|tmux-only/i);
+      expect(body, `${name} uses slash skill syntax`).toContain(`/${name}`);
+      expect(body, `${name} avoids dollar command syntax`).not.toMatch(/\$[A-Za-z][A-Za-z0-9_-]*/);
+      expect(body, `${name} avoids runtime state coupling`).not.toMatch(/OMX_TEAM_STATE_ROOT|TMUX_PANE|tmux-only|\.omx|\.agents|\.claude|\.github\/copilot/i);
     }
   });
 

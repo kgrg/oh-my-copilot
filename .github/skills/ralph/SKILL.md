@@ -1,13 +1,20 @@
 ---
 name: ralph
-description: Thin handoff for single-owner implementation and verification loops when a real provider runtime exists.
+description: Single-owner execute-fix-verify loop for one clear task. Use with /ralph when one agent should keep going until evidence or blocker.
 ---
 
-# ralph
+# Ralph
 
-Use when one owner should drive implementation, fixes, and verification to completion.
+Use `/ralph` when one owner should complete one clear task.
 
-1. Require a reviewed plan or clear task brief before execution.
-2. If the current provider exposes a real single-owner completion runtime, hand off with the plan, tests, and known risks.
-3. If no runtime exists, say this is unsupported here and output a sequential execution brief.
-4. Do not emulate a durable runtime inside this skill.
+Do:
+- Start from a plan or concrete task.
+- Implement in small steps.
+- Verify after each meaningful change.
+- Fix failures before claiming done.
+- Stop only with evidence or a blocker.
+
+Output:
+- `Done`
+- `Evidence`
+- `Known gaps`

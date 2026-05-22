@@ -1,15 +1,16 @@
 ---
 name: grill-me
-description: Backward-compatible alias for canonical `grill`; interview the user one question at a time after local exploration.
+description: Ask one sharp clarification question after codebase research when ambiguity still matters. Use with /grill-me before planning or implementation.
 ---
 
 # Grill Me
 
-This skill is a compatibility alias for the canonical `grill` skill.
+Use `/grill-me` after `/codebase-research` when one decision blocks safe progress.
 
-Follow `.github/skills/grill/SKILL.md` exactly:
+Do:
+- State current understanding in 1-2 bullets.
+- Ask exactly one question.
+- Include a recommended answer.
+- Explain what the answer unlocks.
 
-- Explore the codebase, docs, and plans before asking when the answer is locally discoverable.
-- Ask one question at a time.
-- Provide a recommended answer for each question.
-- Walk the design tree until the next planning or implementation step is safe.
+Stop when enough is known for `/ralplan` or direct implementation.

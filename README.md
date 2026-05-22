@@ -2,14 +2,15 @@
 
 Phase 1 MVP for Copilot-compatible project skills and Jira-safe handoff tooling.
 
-`oh-my-copilot` keeps skill behavior in GitHub Copilot's project skill location, validates the capability catalog, reports Copilot skill availability, and prepares Jira payloads without requiring live credentials.
+`oh-my-copilot` keeps skill behavior in GitHub Copilot's project skill location, validates the capability catalog, reports slash-skill availability, and prepares Jira payloads without requiring live credentials.
 
 ## Phase 1 scope
 
 - `.github/skills/<skill>/SKILL.md` is the canonical skill source.
 - No `.agents` or `.claude` skill roots are required.
-- `/grill`, `/grill-me`, `/verify`, `/jira-ticket`, `/code-review`, `/qa`, `/ralplan`, `/team`, and `/ralph` are Copilot project skills.
-- `/team` and `/ralph` remain thin handoff skills, not full durable runtimes in Phase 1.
+- Skills are lite slash workflows: short Markdown instructions, no bundled scripts, no external runtime assumptions.
+- Core flow: `/codebase-research` -> `/grill-me` if unclear -> `/ralplan` -> `/team`, `/ralph`, or `/ultrawork` -> `/code-review` -> `/verify` or `/ultraqa`.
+- Extra lite skills: `/autopilot`, `/jira-ticket`, `/prototype`, `/caveman`, `/debug`, and `/tdd`.
 - Jira supports create, comment, and safe-update payloads; transition/link operations require discovery or fall back to exact human-action payloads.
 
 ## Skill layout
@@ -18,7 +19,7 @@ Phase 1 MVP for Copilot-compatible project skills and Jira-safe handoff tooling.
 .github/skills/<skill>/SKILL.md # GitHub Copilot project skills
 ```
 
-This follows the Copilot agent-skills docs: project skills can live in `.github/skills`.
+This follows the Copilot agent-skills docs: project skills can live in `.github/skills` and are invoked with `/skill-name`.
 
 ## Quickstart
 
@@ -42,5 +43,5 @@ npx tsx src/cli.ts jira render ../.omx/plans/oh-my-copilot-general-skills-ralpla
 
 ## Documentation
 
-- [General skills](docs/general-skills.md) explains the Copilot skill layout, capability IDs, and portability rules.
+- [General skills](docs/general-skills.md) explains the slash-skill layout, capability IDs, and portability rules.
 - [Jira adapter](docs/jira.md) explains configuration discovery, safe operations, dry-runs, and fallback payloads.

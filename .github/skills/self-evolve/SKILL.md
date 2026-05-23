@@ -27,6 +27,10 @@ Ignore false positives ("no problem", "stop the server", "don't worry") by check
 
 ## The loop
 
+### 0. Once-per-session guard
+
+If you have already invoked `/self-evolve` in this conversation, stop immediately. Say "self-evolve already ran this session" and do nothing else. This prevents wrap-up recursion when the user replies "thanks" or "done" to the loop's own report-back.
+
 ### 1. Inspect this session
 
 Walk back through the conversation and list every correction event. For each, record:
@@ -55,10 +59,11 @@ For each new topic from this session, grep the ledger for the same topic label. 
 
 Before drafting, list:
 
-- `.github/skills/*/SKILL.md` (project skills)
+- `.github/skills/*/SKILL.md` (project skills, including any previously promoted `learned-*`)
+- `.oh-my-copilot/self-evolve/drafts/*/SKILL.md` (in-flight drafts not yet promoted)
 - `~/.copilot/skills/*/SKILL.md` (user skills, if present)
 
-If any existing skill's frontmatter `description` or body already addresses this topic, **do not draft.** Append one note to the ledger and stop:
+If any existing skill or in-flight draft's frontmatter `description` or body already addresses this topic, **do not draft.** Append one note to the ledger and stop:
 
 ```
 # covered-by: <existing-skill-name> | <topic>
@@ -66,11 +71,12 @@ If any existing skill's frontmatter `description` or body already addresses this
 
 ### 5. Draft the new skill
 
-**Path:** `.github/skills/learned-<slug>/SKILL.md`
+**Path:** `.oh-my-copilot/self-evolve/drafts/<slug>/SKILL.md`
 
-- The directory is at the top of `.github/skills/`, prefixed `learned-`. Do NOT nest under a `learned/` parent dir.
-- The frontmatter `name` MUST equal the directory name exactly (lint enforces this).
-- Slug rule: kebab-case of the topic, max 40 chars (so the full dir name `learned-<slug>` is at most 48 chars).
+**This is outside `.github/skills/` on purpose.** Drafts must NOT live in the plugin's active skill root: anything under `.github/skills/` is loaded as an active skill on the next Copilot session, so a draft there would silently auto-arm before a human reviewed it. The `.oh-my-copilot/self-evolve/drafts/` location is never read by Copilot CLI; a human promotes a draft by moving its directory to `.github/skills/learned-<slug>/` (see `docs/self-evolve.md`).
+
+- Slug rule: kebab-case of the topic, max 40 chars.
+- The draft's frontmatter `name` should be `learned-<slug>` (matches the target dir name a human will promote it into).
 
 Write the file with this exact frontmatter and body:
 
@@ -96,7 +102,7 @@ Invoke `/learned-<slug>` when the trigger below applies.
 
 ## Source
 Drafted by /self-evolve from 3+ corrections in .oh-my-copilot/self-evolve/log.md.
-Promote to active by removing the `status: draft` line.
+Promote to active by moving this directory to .github/skills/learned-<slug>/.
 ```
 
 ### 6. Report to the user
@@ -112,5 +118,5 @@ State:
 
 - One ledger line per correction. Never batch into a paragraph.
 - One draft skill per recurring topic. Never combine unrelated topics.
-- Drafts always carry `status: draft`. A human flips them to active by deleting that line.
+- Drafts always carry `status: draft`. A human promotes them by moving the draft directory from `.oh-my-copilot/self-evolve/drafts/<slug>/` into `.github/skills/learned-<slug>/` (and optionally deleting the `status: draft` line). Until that move, the draft is inert — Copilot CLI does not load it.
 - If unsure whether something is a correction, skip it. False negatives are cheap; false positives pollute the loop.

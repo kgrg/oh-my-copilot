@@ -1,19 +1,18 @@
 import { describe, expect, it } from 'vitest';
-import { loadCapabilityCatalog, loadSkillCatalog, validateCatalogBundle } from '../src/catalog.js';
-
-const LITE_SKILLS = ['codebase-research', 'grill-me', 'ralplan', 'team', 'ralph', 'ultrawork', 'ultraqa', 'autopilot', 'code-review', 'verify', 'jira-ticket', 'prototype', 'caveman', 'debug', 'tdd'];
+import { loadCapabilityCatalog, loadSkillCatalog, phase1SkillNames, validateCatalogBundle } from '../src/catalog.js';
 
 describe('general skill catalog', () => {
   it('contains the approved lite Copilot project skills', () => {
     const catalog = loadSkillCatalog();
     const validation = validateCatalogBundle();
+    const liteSkills = phase1SkillNames(catalog);
 
     expect(validation.issues).toEqual([]);
     expect(catalog.commandPrefix).toBe('/');
-    expect(catalog.skills.map((skill) => skill.name)).toEqual(LITE_SKILLS);
+    expect(catalog.skills.map((skill) => skill.name)).toEqual(liteSkills);
 
     const commands = new Set(catalog.skills.flatMap((skill) => skill.slashCommands));
-    expect([...commands]).toEqual(expect.arrayContaining(LITE_SKILLS));
+    expect([...commands]).toEqual(expect.arrayContaining(liteSkills));
   });
 
   it('marks every Copilot compatibility state as supported, fallback, or unsupported', () => {
@@ -28,11 +27,22 @@ describe('general skill catalog', () => {
 
   it('keeps all Phase 1 capability surfaces native project skills', () => {
     const capabilities = loadCapabilityCatalog();
-    for (const id of LITE_SKILLS) {
+    const liteSkills = phase1SkillNames();
+    for (const id of liteSkills) {
       const capability = capabilities.capabilities.find((entry) => entry.id === id);
       expect(capability, `${id} capability exists`).toBeTruthy();
       expect(capability?.providerSupport.copilot.state).toBe('native');
       expect(capability?.providerSupport.copilot.notes).toContain(`/${id}`);
+    }
+  });
+
+  it('does not present lite execution skills as durable runtimes', () => {
+    const capabilities = loadCapabilityCatalog();
+    for (const id of ['team', 'execution.parallel', 'ralph', 'execution.single-owner', 'ultrawork', 'autopilot', 'execution.autonomous']) {
+      const capability = capabilities.capabilities.find((entry) => entry.id === id);
+      expect(capability, `${id} capability exists`).toBeTruthy();
+      expect(capability?.providerSupport.copilot.state).toBe('native');
+      expect(capability?.providerSupport.copilot.notes).toMatch(/not a durable runtime/i);
     }
   });
 });

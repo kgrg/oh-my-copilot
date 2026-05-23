@@ -9,8 +9,11 @@ Phase 1 MVP for Copilot-compatible project skills and Jira-safe handoff tooling.
 - `.github/skills/<skill>/SKILL.md` is the canonical skill source.
 - No `.agents` or `.claude` skill roots are required.
 - Skills are lite slash workflows: short Markdown instructions, no bundled scripts, no external runtime assumptions.
+- Fetched skills can be moved directly to `.github/skills/<skill>/`; no catalog entry is required for Copilot to read them.
 - Core flow: `/codebase-research` -> `/grill-me` if unclear -> `/ralplan` -> `/team`, `/ralph`, or `/ultrawork` -> `/code-review` -> `/verify` or `/ultraqa`.
 - Extra lite skills: `/autopilot`, `/jira-ticket`, `/prototype`, `/caveman`, `/debug`, and `/tdd`.
+- Catalog `native` support means a Copilot project skill exists; Phase 1 execution skills are instructions, not durable runtimes.
+- Migration: use `/grill-me` instead of `/grill`, and `/ultraqa` instead of `/qa`.
 - Jira supports create, comment, and safe-update payloads; transition/link operations require discovery or fall back to exact human-action payloads.
 
 ## Skill layout
@@ -30,6 +33,7 @@ npm test
 npm run lint:skills
 npm run sync:dry-run
 npm run jira:dry-run
+npx tsx src/cli.ts skill install .github/skills/create-skill --dry-run
 ```
 
 Useful local commands:
@@ -44,4 +48,5 @@ npx tsx src/cli.ts jira render ../.omx/plans/oh-my-copilot-general-skills-ralpla
 ## Documentation
 
 - [General skills](docs/general-skills.md) explains the slash-skill layout, capability IDs, and portability rules.
+- [Copilot distribution](docs/copilot-distribution.md) explains project/user skill installs and why GitHub App-based Copilot Extensions are not the target.
 - [Jira adapter](docs/jira.md) explains configuration discovery, safe operations, dry-runs, and fallback payloads.

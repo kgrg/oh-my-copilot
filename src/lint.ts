@@ -46,21 +46,35 @@ export function lintSkills(rootOrOptions: string | { cwd?: string; packageRoot?:
   }
 
   const presentSkills = listSkillNames(paths.defaultSkillsRoot);
-  for (const skill of bundle.skills.skills.filter((entry) => entry.sourcePath.startsWith('.github/skills/'))) {
-    const file = resolve(paths.packageRoot, skill.sourcePath);
+  const catalogSkills = new Map(
+    bundle.skills.skills
+      .filter((entry) => entry.sourcePath.startsWith('.github/skills/'))
+      .map((skill) => [skill.sourcePath.split('/').at(-2) ?? skill.name, skill]),
+  );
+
+  for (const skill of catalogSkills.values()) {
     const skillDir = skill.sourcePath.split('/').at(-2) ?? skill.name;
+    const file = resolve(paths.packageRoot, skill.sourcePath);
     if (!presentSkills.has(skillDir) || !existsSync(file)) {
       issues.push({ level: 'error', code: 'skill.missing', message: `missing skill file for ${skill.name}`, file });
       continue;
     }
+  }
+
+  for (const skillDir of presentSkills) {
+    const file = resolve(paths.defaultSkillsRoot, skillDir, 'SKILL.md');
+    if (!existsSync(file)) continue;
 
     const body = readFileSync(file, 'utf8');
     const frontmatter = parseFrontmatter(body);
-    if (frontmatter.name !== skill.name && !skill.aliases.includes(frontmatter.name ?? '')) {
-      issues.push({ level: 'error', code: 'skill.name', message: `frontmatter name ${frontmatter.name ?? '<missing>'} does not match ${skill.name}`, file });
+    const catalogSkill = catalogSkills.get(skillDir);
+    if (catalogSkill && frontmatter.name !== catalogSkill.name && !catalogSkill.aliases.includes(frontmatter.name ?? '')) {
+      issues.push({ level: 'error', code: 'skill.name', message: `frontmatter name ${frontmatter.name ?? '<missing>'} does not match ${catalogSkill.name}`, file });
+    } else if (!catalogSkill && frontmatter.name !== skillDir) {
+      issues.push({ level: 'error', code: 'skill.name', message: `frontmatter name ${frontmatter.name ?? '<missing>'} does not match ${skillDir}`, file });
     }
     if (!frontmatter.description) {
-      issues.push({ level: 'warning', code: 'skill.description', message: `missing description for ${skill.name}`, file });
+      issues.push({ level: 'warning', code: 'skill.description', message: `missing description for ${skillDir}`, file });
     }
     for (const term of providerRuntimeTerms) {
       if (body.includes(term)) {

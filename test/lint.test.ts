@@ -2,9 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { lintSkills } from '../src/lint.js';
-import { resolveProjectPaths } from '../src/project.js';
-
-const LITE_SKILLS = ['codebase-research', 'grill-me', 'ralplan', 'team', 'ralph', 'ultrawork', 'ultraqa', 'autopilot', 'code-review', 'verify', 'jira-ticket', 'prototype', 'caveman', 'debug', 'tdd'];
+import { listSkillNames, resolveProjectPaths } from '../src/project.js';
 
 describe('skill portability lint', () => {
   it('passes committed canonical skills without catalog errors', () => {
@@ -15,12 +13,16 @@ describe('skill portability lint', () => {
 
   it('keeps runtime-specific command examples out of Copilot skills', () => {
     const paths = resolveProjectPaths({ cwd: process.cwd() });
-    for (const name of LITE_SKILLS) {
+    const skillNames = listSkillNames(paths.packageRoot);
+    const dollarCommandPattern = new RegExp(`\\$(?:${skillNames.join('|')})\\b`, 'i');
+    const runtimePathPattern = /(?:\.claude(?:-plugin)?|\.agents|\.omx|\.github\/copilot)\//i;
+    for (const name of skillNames) {
       const skillFile = path.join(paths.packageRoot, '.github', 'skills', name, 'SKILL.md');
       const body = readFileSync(skillFile, 'utf8');
       expect(body, `${name} uses slash skill syntax`).toContain(`/${name}`);
-      expect(body, `${name} avoids dollar command syntax`).not.toMatch(/\$[A-Za-z][A-Za-z0-9_-]*/);
-      expect(body, `${name} avoids runtime state coupling`).not.toMatch(/OMX_TEAM_STATE_ROOT|TMUX_PANE|tmux-only|\.omx|\.agents|\.claude|\.github\/copilot/i);
+      expect(body, `${name} avoids dollar command syntax`).not.toMatch(dollarCommandPattern);
+      expect(body, `${name} avoids runtime state coupling`).not.toMatch(/OMX_TEAM_STATE_ROOT|TMUX_PANE|tmux-only/i);
+      expect(body, `${name} avoids runtime path coupling`).not.toMatch(runtimePathPattern);
     }
   });
 

@@ -36,7 +36,18 @@ Rules:
 - Do not create `.agents` or `.claude` skill roots in this repo.
 - Do not generate `.github/copilot/...` wrappers; Copilot reads project skills directly.
 - Keep each `SKILL.md` small: YAML frontmatter (`name`, `description`) plus focused Markdown instructions.
-- Do not add bundled scripts, references, or runtime state to the lite skills yet.
+- Optional `references/`, `scripts/`, or `assets/` may live beside `SKILL.md` when a fetched skill needs progressive disclosure.
+- Do not add runtime state to the lite skills.
+
+## Fetched skills
+
+Skills fetched in the common `skills/<name>/SKILL.md` package shape can be moved directly to `.github/skills/<name>/SKILL.md`.
+The catalog is optional metadata for the built-in general skill list; Copilot discovery uses `.github/skills` itself.
+
+## Capability semantics
+
+`providerSupport.copilot.state = native` means Copilot can read the repo-local slash skill from `.github/skills`.
+It does not imply a durable execution runtime. Phase 1 execution skills such as `/team`, `/ralph`, `/ultrawork`, and `/autopilot` are plain project-skill instructions, not persisted runtimes.
 
 ## Phase 1 flow
 
@@ -58,3 +69,8 @@ Canonical `.github/skills/*/SKILL.md` bodies should avoid runtime coupling:
 - Do not embed secrets or Jira credentials.
 - Do not use `$skill` invocation syntax in Copilot project skills.
 - Prefer slash-skill language and plain Markdown instructions over long framework-specific prompt text.
+
+## Migration notes
+
+- `/grill` was folded into `/grill-me` to keep one clarification entrypoint.
+- `/qa` was folded into `/ultraqa` for the adversarial QA pass.

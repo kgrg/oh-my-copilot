@@ -78,24 +78,6 @@ export interface CatalogValidationResult {
   skillNames: string[];
 }
 
-const REQUIRED_PHASE1_CAPABILITIES = [
-  "codebase-research",
-  "grill-me",
-  "ralplan",
-  "team",
-  "ralph",
-  "ultrawork",
-  "ultraqa",
-  "autopilot",
-  "code-review",
-  "verify",
-  "jira-ticket",
-  "prototype",
-  "caveman",
-  "debug",
-  "tdd",
-] as const;
-
 const PROVIDERS: ProviderId[] = ["copilot"];
 const STATES: ProviderSupportState[] = ["native", "handoff", "stub", "unsupported"];
 const COMPAT_STATES: CompatProviderState[] = ["supported", "fallback", "unsupported"];
@@ -121,6 +103,18 @@ export function loadCatalogBundle(catalogDir = defaultCatalogDir()): CatalogBund
     capabilities: loadCapabilityCatalog(catalogDir),
     skills: loadSkillCatalog(catalogDir),
   };
+}
+
+export function phase1Skills(catalog: SkillCatalog = loadSkillCatalog()): SkillProjection[] {
+  return catalog.skills.filter((skill) => skill.phase1);
+}
+
+export function phase1SkillNames(catalog: SkillCatalog = loadSkillCatalog()): string[] {
+  return phase1Skills(catalog).map((skill) => skill.name);
+}
+
+export function phase1SlashCommands(catalog: SkillCatalog = loadSkillCatalog()): string[] {
+  return phase1Skills(catalog).flatMap((skill) => (skill.slashCommands.length > 0 ? skill.slashCommands : [skill.name]));
 }
 
 export function findCapability(id: string, catalog: CapabilityCatalog = loadCapabilityCatalog()): Capability | undefined {
@@ -180,12 +174,6 @@ export function validateCatalogBundle(bundle: CatalogBundle = loadCatalogBundle(
     }
   }
 
-  for (const requiredId of REQUIRED_PHASE1_CAPABILITIES) {
-    if (!capabilityIdSet.has(requiredId)) {
-      issues.push({ code: "missing-required-capability", path: "capabilities", message: `Missing Phase 1 capability: ${requiredId}` });
-    }
-  }
-
   for (const [index, skill] of bundle.skills.skills.entries()) {
     const path = `skills[${index}]`;
     if (!skill.name) {
@@ -199,6 +187,9 @@ export function validateCatalogBundle(bundle: CatalogBundle = loadCatalogBundle(
     }
     if (skill.slashCommands.length === 0) {
       issues.push({ code: "missing-slash-command", path: `${path}.slashCommands`, message: `Skill ${skill.name} must expose at least one slash command.` });
+    }
+    if (skill.phase1 && !capabilityIdSet.has(skill.capabilityId || skill.name)) {
+      issues.push({ code: "missing-phase1-skill-capability", path: `${path}.capabilityId`, message: `Phase 1 skill ${skill.name} must map to a catalog capability.` });
     }
   }
 

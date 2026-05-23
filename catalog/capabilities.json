@@ -156,7 +156,7 @@
       "title": "Team",
       "category": "execution",
       "summary": "Split approved plans into parallel lanes.",
-      "notes": "Lite slash project skill; no bundled scripts or external runtime requirement.",
+      "notes": "Lite slash project skill; instructional only, with no bundled scripts, durable orchestration, or external runtime requirement.",
       "defaultCommand": "team",
       "phase1": true,
       "sourceSkill": "team",
@@ -169,7 +169,7 @@
       "providerSupport": {
         "copilot": {
           "state": "native",
-          "notes": "Use /team from .github/skills/team/SKILL.md."
+          "notes": "Use /team from .github/skills/team/SKILL.md. Project skill only; not a durable runtime."
         }
       }
     },
@@ -179,7 +179,7 @@
       "title": "Team",
       "category": "execution",
       "summary": "Split approved plans into parallel lanes.",
-      "notes": "Lite slash project skill; no bundled scripts or external runtime requirement.",
+      "notes": "Lite slash project skill; instructional only, with no bundled scripts, durable orchestration, or external runtime requirement.",
       "defaultCommand": "team",
       "phase1": true,
       "sourceSkill": "team",
@@ -192,7 +192,7 @@
       "providerSupport": {
         "copilot": {
           "state": "native",
-          "notes": "Use /team from .github/skills/team/SKILL.md."
+          "notes": "Use /team from .github/skills/team/SKILL.md. Project skill only; not a durable runtime."
         }
       }
     },
@@ -202,7 +202,7 @@
       "title": "Ralph",
       "category": "execution",
       "summary": "Run a single-owner execute-fix-verify loop.",
-      "notes": "Lite slash project skill; no bundled scripts or external runtime requirement.",
+      "notes": "Lite slash project skill; instructional only, with no bundled scripts, durable orchestration, or external runtime requirement.",
       "defaultCommand": "ralph",
       "phase1": true,
       "sourceSkill": "ralph",
@@ -215,7 +215,7 @@
       "providerSupport": {
         "copilot": {
           "state": "native",
-          "notes": "Use /ralph from .github/skills/ralph/SKILL.md."
+          "notes": "Use /ralph from .github/skills/ralph/SKILL.md. Project skill only; not a durable runtime."
         }
       }
     },
@@ -225,7 +225,7 @@
       "title": "Ralph",
       "category": "execution",
       "summary": "Run a single-owner execute-fix-verify loop.",
-      "notes": "Lite slash project skill; no bundled scripts or external runtime requirement.",
+      "notes": "Lite slash project skill; instructional only, with no bundled scripts, durable orchestration, or external runtime requirement.",
       "defaultCommand": "ralph",
       "phase1": true,
       "sourceSkill": "ralph",
@@ -238,7 +238,7 @@
       "providerSupport": {
         "copilot": {
           "state": "native",
-          "notes": "Use /ralph from .github/skills/ralph/SKILL.md."
+          "notes": "Use /ralph from .github/skills/ralph/SKILL.md. Project skill only; not a durable runtime."
         }
       }
     },
@@ -248,7 +248,7 @@
       "title": "Ultrawork",
       "category": "execution",
       "summary": "Batch many independent small work items.",
-      "notes": "Lite slash project skill; no bundled scripts or external runtime requirement.",
+      "notes": "Lite slash project skill; instructional only, with no bundled scripts, durable orchestration, or external runtime requirement.",
       "defaultCommand": "ultrawork",
       "phase1": true,
       "sourceSkill": "ultrawork",
@@ -261,7 +261,7 @@
       "providerSupport": {
         "copilot": {
           "state": "native",
-          "notes": "Use /ultrawork from .github/skills/ultrawork/SKILL.md."
+          "notes": "Use /ultrawork from .github/skills/ultrawork/SKILL.md. Project skill only; not a durable runtime."
         }
       }
     },
@@ -317,7 +317,7 @@
       "title": "Autopilot",
       "category": "execution",
       "summary": "Run the lightweight end-to-end skill flow.",
-      "notes": "Lite slash project skill; no bundled scripts or external runtime requirement.",
+      "notes": "Lite slash project skill; instructional only, with no bundled scripts, durable orchestration, or external runtime requirement.",
       "defaultCommand": "autopilot",
       "phase1": true,
       "sourceSkill": "autopilot",
@@ -330,7 +330,7 @@
       "providerSupport": {
         "copilot": {
           "state": "native",
-          "notes": "Use /autopilot from .github/skills/autopilot/SKILL.md."
+          "notes": "Use /autopilot from .github/skills/autopilot/SKILL.md. Project skill only; not a durable runtime."
         }
       }
     },
@@ -340,7 +340,7 @@
       "title": "Autopilot",
       "category": "execution",
       "summary": "Run the lightweight end-to-end skill flow.",
-      "notes": "Lite slash project skill; no bundled scripts or external runtime requirement.",
+      "notes": "Lite slash project skill; instructional only, with no bundled scripts, durable orchestration, or external runtime requirement.",
       "defaultCommand": "autopilot",
       "phase1": true,
       "sourceSkill": "autopilot",
@@ -353,7 +353,7 @@
       "providerSupport": {
         "copilot": {
           "state": "native",
-          "notes": "Use /autopilot from .github/skills/autopilot/SKILL.md."
+          "notes": "Use /autopilot from .github/skills/autopilot/SKILL.md. Project skill only; not a durable runtime."
         }
       }
     },

@@ -31,7 +31,7 @@ function printResult(result: CliResult, json: boolean): void {
 }
 
 function help(): string {
-  return `oh-my-copilot\n\nCommands:\n  catalog list [--json]\n  catalog validate [--json]\n  catalog capability <id> [--json]\n  project inspect [--json]\n  lint:skills [--root <repo>]\n  sync:dry-run [--root <repo>]\n  jira:dry-run [--root <repo>]\n  jira render <plan-file> [--root <repo>] [--json]\n  jira apply <ticket-key-or-plan-file> --comment|--update|--transition|--link [--dry-run] [--json]\n`;
+  return `oh-my-copilot\n\nCommands:\n  catalog list [--json]\n  catalog validate [--json]\n  catalog capability <id> [--json]\n  project inspect [--json]\n  skill install <skill-dir> [--root <repo>] [--scope project|user] [--dry-run] [--json]\n  lint:skills [--root <repo>]\n  sync:dry-run [--root <repo>]\n  jira:dry-run [--root <repo>]\n  jira render <plan-file> [--root <repo>] [--json]\n  jira apply <ticket-key-or-plan-file> --comment|--update|--transition|--link [--dry-run] [--json]\n`;
 }
 
 async function resolveExistingInputPath(value: string): Promise<string> {
@@ -89,6 +89,23 @@ export async function runCli(argv = process.argv.slice(2)): Promise<CliResult> {
   if (group === "project" && command === "inspect") {
     const output = inspectProject();
     return json ? { ok: true, output } : { ok: true, message: `packageRoot=${output.packageRoot}\nskillsRoot=${output.defaultSkillsRoot}\nhasCatalog=${output.hasCatalog}` };
+  }
+
+  if (group === "skill" && command === "install" && value) {
+    const { installSkill, formatSkillInstall } = await import("./skills.js");
+    try {
+      const result = installSkill({
+        cwd: process.cwd(),
+        root: flagValue(argv, "--root"),
+        source: value,
+        scope: flagValue(argv, "--scope") === "user" ? "user" : "project",
+        dryRun: hasFlag(argv, "--dry-run"),
+      });
+      return json ? { ok: true, output: result } : { ok: true, message: formatSkillInstall(result) };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      return { ok: false, exitCode: 1, output: json ? { ok: false, error: message } : undefined, message };
+    }
   }
 
   if (group === "lint:skills") {

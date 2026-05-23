@@ -1,6 +1,5 @@
-import { existsSync, readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
-import { loadCatalogBundle, type SkillProjection } from './catalog.js';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { packageRootFromImportMeta } from './project.js';
 
 export interface ProjectionFile {
@@ -8,49 +7,25 @@ export interface ProjectionFile {
   content: string;
 }
 
-const REQUIRED_COMMANDS = ['codebase-research', 'grill-me', 'ralplan', 'team', 'ralph', 'ultrawork', 'ultraqa', 'autopilot', 'code-review', 'verify', 'jira-ticket', 'prototype', 'caveman', 'debug', 'tdd'];
-
-function skillSource(command: string, skill: SkillProjection, packageRoot: string): ProjectionFile {
-  const directPath = `.github/skills/${command}/SKILL.md`;
-  const directAbsolute = resolve(packageRoot, directPath);
-  const sourcePath = existsSync(directAbsolute) ? directPath : skill.sourcePath;
-  const absolute = resolve(packageRoot, sourcePath);
-  if (!existsSync(absolute)) {
-    throw new Error(`missing Copilot skill source for /${command}: ${sourcePath}`);
-  }
-  return {
-    path: directPath,
-    content: readFileSync(absolute, 'utf8'),
-  };
-}
-
-function assertRequiredSkills(files: ProjectionFile[]): void {
-  const projected = new Set(files
-    .map((file) => file.path.match(/\.github\/skills\/([^/]+)\/SKILL\.md$/)?.[1])
-    .filter((command): command is string => Boolean(command)));
-  const missing = REQUIRED_COMMANDS.filter((command) => !projected.has(command));
-  if (missing.length > 0) throw new Error(`missing required Copilot skills: ${missing.map((command) => `/${command}`).join(', ')}`);
+function projectSkillNames(packageRoot: string): string[] {
+  const skillsRoot = join(packageRoot, '.github', 'skills');
+  if (!existsSync(skillsRoot)) return [];
+  return readdirSync(skillsRoot, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name)
+    .filter((name) => existsSync(join(skillsRoot, name, 'SKILL.md')))
+    .sort();
 }
 
 export function projectCopilotCommands(): ProjectionFile[] {
   const packageRoot = packageRootFromImportMeta(import.meta.url);
-  const bundle = loadCatalogBundle(resolve(packageRoot, 'catalog'));
-  const files: ProjectionFile[] = [];
-  const emittedCommands = new Set<string>();
-
-  function emitSkill(skill: SkillProjection, command: string): void {
-    if (emittedCommands.has(command)) return;
-    emittedCommands.add(command);
-    files.push(skillSource(command, skill, packageRoot));
-  }
-
-  for (const skill of bundle.skills.skills) {
-    const commands = skill.slashCommands.length > 0 ? skill.slashCommands : [skill.name, ...skill.aliases];
-    for (const command of commands) emitSkill(skill, command);
-  }
-
-  assertRequiredSkills(files);
-  return files.sort((a, b) => a.path.localeCompare(b.path));
+  return projectSkillNames(packageRoot).map((name) => {
+    const path = `.github/skills/${name}/SKILL.md`;
+    return {
+      path,
+      content: readFileSync(join(packageRoot, path), 'utf8'),
+    };
+  });
 }
 
 export function formatDryRun(files = projectCopilotCommands()): string {

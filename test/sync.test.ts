@@ -3,14 +3,13 @@ import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { formatDryRun, projectCopilotCommands } from '../src/sync.js';
-import { resolveProjectPaths } from '../src/project.js';
-
-const LITE_SKILLS = ['codebase-research', 'grill-me', 'ralplan', 'team', 'ralph', 'ultrawork', 'ultraqa', 'autopilot', 'code-review', 'verify', 'jira-ticket', 'prototype', 'caveman', 'debug', 'tdd'];
+import { listSkillNames, resolveProjectPaths } from '../src/project.js';
 
 function hashCanonicalSkills() {
   const paths = resolveProjectPaths({ cwd: process.cwd() });
+  const skills = listSkillNames(paths.packageRoot);
   return Object.fromEntries(
-    LITE_SKILLS
+    skills
       .map((name) => path.join(paths.packageRoot, '.github', 'skills', name, 'SKILL.md'))
       .filter((file) => existsSync(file))
       .map((file) => [file, createHash('sha256').update(readFileSync(file)).digest('hex')]),
@@ -23,9 +22,10 @@ describe('Copilot skills dry-run', () => {
     const files = projectCopilotCommands();
     const after = hashCanonicalSkills();
     const output = formatDryRun(files);
+    const skills = listSkillNames();
 
     expect(after).toEqual(before);
-    for (const command of LITE_SKILLS) {
+    for (const command of skills) {
       expect(files.map((file) => file.path)).toContain(`.github/skills/${command}/SKILL.md`);
       expect(output).toContain(`skills/${command}/SKILL.md`);
     }

@@ -13,7 +13,7 @@ The canonical skill source is the repo-local `.github/skills` directory. This is
 | `/ralph` | `ralph`, `execution.single-owner` | Single-owner execute-fix-verify loop. |
 | `/ultrawork` | `ultrawork`, `execution.parallel` | Batch many independent small tasks. |
 | `/ultraqa` | `ultraqa`, `qa.behavioral` | Adversarial behavior and regression QA. |
-| `/autopilot` | `autopilot`, `execution.autonomous` | Lightweight end-to-end flow across the other skills. |
+| `/omc-autopilot` | `omc-autopilot`, `execution.autonomous` | Lightweight end-to-end flow across the other skills. (Renamed from `/autopilot` to avoid Copilot CLI built-in collision.) |
 | `/code-review` | `code-review`, `review.independent` | Review completed changes before merge or handoff. |
 | `/verify` | `verify`, `verification.evidence` | Prove completion claims with evidence. |
 | `/jira-ticket` | `jira-ticket`, `tracker.ticket` | Render Jira create/comment/safe-update payloads. |
@@ -47,7 +47,7 @@ The catalog is optional metadata for the built-in general skill list; Copilot di
 ## Capability semantics
 
 `providerSupport.copilot.state = native` means Copilot can read the repo-local slash skill from `.github/skills`.
-It does not imply a durable execution runtime. Phase 1 execution skills such as `/team`, `/ralph`, `/ultrawork`, and `/autopilot` are plain project-skill instructions, not persisted runtimes.
+It does not imply a durable execution runtime. Phase 1 execution skills such as `/team`, `/ralph`, `/ultrawork`, and `/omc-autopilot` are plain project-skill instructions, not persisted runtimes.
 
 ## Phase 1 flow
 

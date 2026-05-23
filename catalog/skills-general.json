@@ -186,25 +186,25 @@
       "phase1": true
     },
     {
-      "name": "autopilot",
-      "capabilityId": "autopilot",
+      "name": "omc-autopilot",
+      "capabilityId": "omc-autopilot",
       "capabilityIds": [
-        "autopilot",
+        "omc-autopilot",
         "execution.autonomous"
       ],
-      "source": ".github/skills/autopilot/SKILL.md",
-      "sourcePath": ".github/skills/autopilot/SKILL.md",
-      "canonicalPath": ".github/skills/autopilot/SKILL.md",
+      "source": ".github/skills/omc-autopilot/SKILL.md",
+      "sourcePath": ".github/skills/omc-autopilot/SKILL.md",
+      "canonicalPath": ".github/skills/omc-autopilot/SKILL.md",
       "description": "Run the lightweight end-to-end skill flow.",
       "summary": "Run the lightweight end-to-end skill flow.",
       "support": "project-skill",
-      "aliases": [],
+      "aliases": ["autopilot"],
       "slashCommands": [
-        "autopilot"
+        "omc-autopilot"
       ],
       "projections": {
         "copilot": {
-          "command": "/autopilot",
+          "command": "/omc-autopilot",
           "state": "supported"
         }
       },

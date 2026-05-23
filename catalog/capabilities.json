@@ -1,0 +1,683 @@
+{
+  "schemaVersion": 1,
+  "providerStates": [
+    "native",
+    "handoff",
+    "stub",
+    "unsupported"
+  ],
+  "compatProviderStates": [
+    "supported",
+    "fallback",
+    "unsupported"
+  ],
+  "capabilities": [
+    {
+      "id": "codebase-research",
+      "name": "codebase-research",
+      "title": "Codebase research",
+      "category": "research",
+      "summary": "Read repo evidence before planning or asking.",
+      "notes": "Lite slash project skill; no bundled scripts or external runtime requirement.",
+      "defaultCommand": "codebase-research",
+      "phase1": true,
+      "sourceSkill": "codebase-research",
+      "providers": {
+        "copilot": "supported"
+      },
+      "support": {
+        "copilot": "native"
+      },
+      "providerSupport": {
+        "copilot": {
+          "state": "native",
+          "notes": "Use /codebase-research from .github/skills/codebase-research/SKILL.md."
+        }
+      }
+    },
+    {
+      "id": "research.codebase",
+      "name": "research.codebase",
+      "title": "Codebase research",
+      "category": "research",
+      "summary": "Read repo evidence before planning or asking.",
+      "notes": "Lite slash project skill; no bundled scripts or external runtime requirement.",
+      "defaultCommand": "codebase-research",
+      "phase1": true,
+      "sourceSkill": "codebase-research",
+      "providers": {
+        "copilot": "supported"
+      },
+      "support": {
+        "copilot": "native"
+      },
+      "providerSupport": {
+        "copilot": {
+          "state": "native",
+          "notes": "Use /codebase-research from .github/skills/codebase-research/SKILL.md."
+        }
+      }
+    },
+    {
+      "id": "grill-me",
+      "name": "grill-me",
+      "title": "Grill me",
+      "category": "clarification",
+      "summary": "Ask one sharp clarification question after research.",
+      "notes": "Lite slash project skill; no bundled scripts or external runtime requirement.",
+      "defaultCommand": "grill-me",
+      "phase1": true,
+      "sourceSkill": "grill-me",
+      "providers": {
+        "copilot": "supported"
+      },
+      "support": {
+        "copilot": "native"
+      },
+      "providerSupport": {
+        "copilot": {
+          "state": "native",
+          "notes": "Use /grill-me from .github/skills/grill-me/SKILL.md."
+        }
+      }
+    },
+    {
+      "id": "planning.challenge",
+      "name": "planning.challenge",
+      "title": "Grill me",
+      "category": "clarification",
+      "summary": "Ask one sharp clarification question after research.",
+      "notes": "Lite slash project skill; no bundled scripts or external runtime requirement.",
+      "defaultCommand": "grill-me",
+      "phase1": true,
+      "sourceSkill": "grill-me",
+      "providers": {
+        "copilot": "supported"
+      },
+      "support": {
+        "copilot": "native"
+      },
+      "providerSupport": {
+        "copilot": {
+          "state": "native",
+          "notes": "Use /grill-me from .github/skills/grill-me/SKILL.md."
+        }
+      }
+    },
+    {
+      "id": "ralplan",
+      "name": "ralplan",
+      "title": "Ralplan",
+      "category": "planning",
+      "summary": "Create implementation-ready plans and test shape.",
+      "notes": "Lite slash project skill; no bundled scripts or external runtime requirement.",
+      "defaultCommand": "ralplan",
+      "phase1": true,
+      "sourceSkill": "ralplan",
+      "providers": {
+        "copilot": "supported"
+      },
+      "support": {
+        "copilot": "native"
+      },
+      "providerSupport": {
+        "copilot": {
+          "state": "native",
+          "notes": "Use /ralplan from .github/skills/ralplan/SKILL.md."
+        }
+      }
+    },
+    {
+      "id": "planning.consensus",
+      "name": "planning.consensus",
+      "title": "Ralplan",
+      "category": "planning",
+      "summary": "Create implementation-ready plans and test shape.",
+      "notes": "Lite slash project skill; no bundled scripts or external runtime requirement.",
+      "defaultCommand": "ralplan",
+      "phase1": true,
+      "sourceSkill": "ralplan",
+      "providers": {
+        "copilot": "supported"
+      },
+      "support": {
+        "copilot": "native"
+      },
+      "providerSupport": {
+        "copilot": {
+          "state": "native",
+          "notes": "Use /ralplan from .github/skills/ralplan/SKILL.md."
+        }
+      }
+    },
+    {
+      "id": "team",
+      "name": "team",
+      "title": "Team",
+      "category": "execution",
+      "summary": "Split approved plans into parallel lanes.",
+      "notes": "Lite slash project skill; instructional only, with no bundled scripts, durable orchestration, or external runtime requirement.",
+      "defaultCommand": "team",
+      "phase1": true,
+      "sourceSkill": "team",
+      "providers": {
+        "copilot": "supported"
+      },
+      "support": {
+        "copilot": "native"
+      },
+      "providerSupport": {
+        "copilot": {
+          "state": "native",
+          "notes": "Use /team from .github/skills/team/SKILL.md. Project skill only; not a durable runtime."
+        }
+      }
+    },
+    {
+      "id": "execution.parallel",
+      "name": "execution.parallel",
+      "title": "Team",
+      "category": "execution",
+      "summary": "Split approved plans into parallel lanes.",
+      "notes": "Lite slash project skill; instructional only, with no bundled scripts, durable orchestration, or external runtime requirement.",
+      "defaultCommand": "team",
+      "phase1": true,
+      "sourceSkill": "team",
+      "providers": {
+        "copilot": "supported"
+      },
+      "support": {
+        "copilot": "native"
+      },
+      "providerSupport": {
+        "copilot": {
+          "state": "native",
+          "notes": "Use /team from .github/skills/team/SKILL.md. Project skill only; not a durable runtime."
+        }
+      }
+    },
+    {
+      "id": "ralph",
+      "name": "ralph",
+      "title": "Ralph",
+      "category": "execution",
+      "summary": "Run a single-owner execute-fix-verify loop.",
+      "notes": "Lite slash project skill; instructional only, with no bundled scripts, durable orchestration, or external runtime requirement.",
+      "defaultCommand": "ralph",
+      "phase1": true,
+      "sourceSkill": "ralph",
+      "providers": {
+        "copilot": "supported"
+      },
+      "support": {
+        "copilot": "native"
+      },
+      "providerSupport": {
+        "copilot": {
+          "state": "native",
+          "notes": "Use /ralph from .github/skills/ralph/SKILL.md. Project skill only; not a durable runtime."
+        }
+      }
+    },
+    {
+      "id": "execution.single-owner",
+      "name": "execution.single-owner",
+      "title": "Ralph",
+      "category": "execution",
+      "summary": "Run a single-owner execute-fix-verify loop.",
+      "notes": "Lite slash project skill; instructional only, with no bundled scripts, durable orchestration, or external runtime requirement.",
+      "defaultCommand": "ralph",
+      "phase1": true,
+      "sourceSkill": "ralph",
+      "providers": {
+        "copilot": "supported"
+      },
+      "support": {
+        "copilot": "native"
+      },
+      "providerSupport": {
+        "copilot": {
+          "state": "native",
+          "notes": "Use /ralph from .github/skills/ralph/SKILL.md. Project skill only; not a durable runtime."
+        }
+      }
+    },
+    {
+      "id": "ultrawork",
+      "name": "ultrawork",
+      "title": "Ultrawork",
+      "category": "execution",
+      "summary": "Batch many independent small work items.",
+      "notes": "Lite slash project skill; instructional only, with no bundled scripts, durable orchestration, or external runtime requirement.",
+      "defaultCommand": "ultrawork",
+      "phase1": true,
+      "sourceSkill": "ultrawork",
+      "providers": {
+        "copilot": "supported"
+      },
+      "support": {
+        "copilot": "native"
+      },
+      "providerSupport": {
+        "copilot": {
+          "state": "native",
+          "notes": "Use /ultrawork from .github/skills/ultrawork/SKILL.md. Project skill only; not a durable runtime."
+        }
+      }
+    },
+    {
+      "id": "ultraqa",
+      "name": "ultraqa",
+      "title": "UltraQA",
+      "category": "verification",
+      "summary": "Run adversarial behavior and regression QA.",
+      "notes": "Lite slash project skill; no bundled scripts or external runtime requirement.",
+      "defaultCommand": "ultraqa",
+      "phase1": true,
+      "sourceSkill": "ultraqa",
+      "providers": {
+        "copilot": "supported"
+      },
+      "support": {
+        "copilot": "native"
+      },
+      "providerSupport": {
+        "copilot": {
+          "state": "native",
+          "notes": "Use /ultraqa from .github/skills/ultraqa/SKILL.md."
+        }
+      }
+    },
+    {
+      "id": "qa.behavioral",
+      "name": "qa.behavioral",
+      "title": "UltraQA",
+      "category": "verification",
+      "summary": "Run adversarial behavior and regression QA.",
+      "notes": "Lite slash project skill; no bundled scripts or external runtime requirement.",
+      "defaultCommand": "ultraqa",
+      "phase1": true,
+      "sourceSkill": "ultraqa",
+      "providers": {
+        "copilot": "supported"
+      },
+      "support": {
+        "copilot": "native"
+      },
+      "providerSupport": {
+        "copilot": {
+          "state": "native",
+          "notes": "Use /ultraqa from .github/skills/ultraqa/SKILL.md."
+        }
+      }
+    },
+    {
+      "id": "autopilot",
+      "name": "autopilot",
+      "title": "Autopilot",
+      "category": "execution",
+      "summary": "Run the lightweight end-to-end skill flow.",
+      "notes": "Lite slash project skill; instructional only, with no bundled scripts, durable orchestration, or external runtime requirement.",
+      "defaultCommand": "autopilot",
+      "phase1": true,
+      "sourceSkill": "autopilot",
+      "providers": {
+        "copilot": "supported"
+      },
+      "support": {
+        "copilot": "native"
+      },
+      "providerSupport": {
+        "copilot": {
+          "state": "native",
+          "notes": "Use /autopilot from .github/skills/autopilot/SKILL.md. Project skill only; not a durable runtime."
+        }
+      }
+    },
+    {
+      "id": "execution.autonomous",
+      "name": "execution.autonomous",
+      "title": "Autopilot",
+      "category": "execution",
+      "summary": "Run the lightweight end-to-end skill flow.",
+      "notes": "Lite slash project skill; instructional only, with no bundled scripts, durable orchestration, or external runtime requirement.",
+      "defaultCommand": "autopilot",
+      "phase1": true,
+      "sourceSkill": "autopilot",
+      "providers": {
+        "copilot": "supported"
+      },
+      "support": {
+        "copilot": "native"
+      },
+      "providerSupport": {
+        "copilot": {
+          "state": "native",
+          "notes": "Use /autopilot from .github/skills/autopilot/SKILL.md. Project skill only; not a durable runtime."
+        }
+      }
+    },
+    {
+      "id": "code-review",
+      "name": "code-review",
+      "title": "Code review",
+      "category": "verification",
+      "summary": "Review completed changes before merge or handoff.",
+      "notes": "Lite slash project skill; no bundled scripts or external runtime requirement.",
+      "defaultCommand": "code-review",
+      "phase1": true,
+      "sourceSkill": "code-review",
+      "providers": {
+        "copilot": "supported"
+      },
+      "support": {
+        "copilot": "native"
+      },
+      "providerSupport": {
+        "copilot": {
+          "state": "native",
+          "notes": "Use /code-review from .github/skills/code-review/SKILL.md."
+        }
+      }
+    },
+    {
+      "id": "review.independent",
+      "name": "review.independent",
+      "title": "Code review",
+      "category": "verification",
+      "summary": "Review completed changes before merge or handoff.",
+      "notes": "Lite slash project skill; no bundled scripts or external runtime requirement.",
+      "defaultCommand": "code-review",
+      "phase1": true,
+      "sourceSkill": "code-review",
+      "providers": {
+        "copilot": "supported"
+      },
+      "support": {
+        "copilot": "native"
+      },
+      "providerSupport": {
+        "copilot": {
+          "state": "native",
+          "notes": "Use /code-review from .github/skills/code-review/SKILL.md."
+        }
+      }
+    },
+    {
+      "id": "verify",
+      "name": "verify",
+      "title": "Verify",
+      "category": "verification",
+      "summary": "Prove completion claims with evidence.",
+      "notes": "Lite slash project skill; no bundled scripts or external runtime requirement.",
+      "defaultCommand": "verify",
+      "phase1": true,
+      "sourceSkill": "verify",
+      "providers": {
+        "copilot": "supported"
+      },
+      "support": {
+        "copilot": "native"
+      },
+      "providerSupport": {
+        "copilot": {
+          "state": "native",
+          "notes": "Use /verify from .github/skills/verify/SKILL.md."
+        }
+      }
+    },
+    {
+      "id": "verification.evidence",
+      "name": "verification.evidence",
+      "title": "Verify",
+      "category": "verification",
+      "summary": "Prove completion claims with evidence.",
+      "notes": "Lite slash project skill; no bundled scripts or external runtime requirement.",
+      "defaultCommand": "verify",
+      "phase1": true,
+      "sourceSkill": "verify",
+      "providers": {
+        "copilot": "supported"
+      },
+      "support": {
+        "copilot": "native"
+      },
+      "providerSupport": {
+        "copilot": {
+          "state": "native",
+          "notes": "Use /verify from .github/skills/verify/SKILL.md."
+        }
+      }
+    },
+    {
+      "id": "jira-ticket",
+      "name": "jira-ticket",
+      "title": "Jira ticket",
+      "category": "tracking",
+      "summary": "Prepare Jira payloads with safe fallback.",
+      "notes": "Lite slash project skill; no bundled scripts or external runtime requirement.",
+      "defaultCommand": "jira-ticket",
+      "phase1": true,
+      "sourceSkill": "jira-ticket",
+      "providers": {
+        "copilot": "supported"
+      },
+      "support": {
+        "copilot": "native"
+      },
+      "providerSupport": {
+        "copilot": {
+          "state": "native",
+          "notes": "Use /jira-ticket from .github/skills/jira-ticket/SKILL.md."
+        }
+      }
+    },
+    {
+      "id": "tracker.ticket",
+      "name": "tracker.ticket",
+      "title": "Jira ticket",
+      "category": "tracking",
+      "summary": "Prepare Jira payloads with safe fallback.",
+      "notes": "Lite slash project skill; no bundled scripts or external runtime requirement.",
+      "defaultCommand": "jira-ticket",
+      "phase1": true,
+      "sourceSkill": "jira-ticket",
+      "providers": {
+        "copilot": "supported"
+      },
+      "support": {
+        "copilot": "native"
+      },
+      "providerSupport": {
+        "copilot": {
+          "state": "native",
+          "notes": "Use /jira-ticket from .github/skills/jira-ticket/SKILL.md."
+        }
+      }
+    },
+    {
+      "id": "prototype",
+      "name": "prototype",
+      "title": "Prototype",
+      "category": "planning",
+      "summary": "Build disposable experiments to answer design questions.",
+      "notes": "Lite slash project skill; no bundled scripts or external runtime requirement.",
+      "defaultCommand": "prototype",
+      "phase1": true,
+      "sourceSkill": "prototype",
+      "providers": {
+        "copilot": "supported"
+      },
+      "support": {
+        "copilot": "native"
+      },
+      "providerSupport": {
+        "copilot": {
+          "state": "native",
+          "notes": "Use /prototype from .github/skills/prototype/SKILL.md."
+        }
+      }
+    },
+    {
+      "id": "design.prototype",
+      "name": "design.prototype",
+      "title": "Prototype",
+      "category": "planning",
+      "summary": "Build disposable experiments to answer design questions.",
+      "notes": "Lite slash project skill; no bundled scripts or external runtime requirement.",
+      "defaultCommand": "prototype",
+      "phase1": true,
+      "sourceSkill": "prototype",
+      "providers": {
+        "copilot": "supported"
+      },
+      "support": {
+        "copilot": "native"
+      },
+      "providerSupport": {
+        "copilot": {
+          "state": "native",
+          "notes": "Use /prototype from .github/skills/prototype/SKILL.md."
+        }
+      }
+    },
+    {
+      "id": "caveman",
+      "name": "caveman",
+      "title": "Caveman",
+      "category": "communication",
+      "summary": "Use ultra-compact response style.",
+      "notes": "Lite slash project skill; no bundled scripts or external runtime requirement.",
+      "defaultCommand": "caveman",
+      "phase1": true,
+      "sourceSkill": "caveman",
+      "providers": {
+        "copilot": "supported"
+      },
+      "support": {
+        "copilot": "native"
+      },
+      "providerSupport": {
+        "copilot": {
+          "state": "native",
+          "notes": "Use /caveman from .github/skills/caveman/SKILL.md."
+        }
+      }
+    },
+    {
+      "id": "communication.compact",
+      "name": "communication.compact",
+      "title": "Caveman",
+      "category": "communication",
+      "summary": "Use ultra-compact response style.",
+      "notes": "Lite slash project skill; no bundled scripts or external runtime requirement.",
+      "defaultCommand": "caveman",
+      "phase1": true,
+      "sourceSkill": "caveman",
+      "providers": {
+        "copilot": "supported"
+      },
+      "support": {
+        "copilot": "native"
+      },
+      "providerSupport": {
+        "copilot": {
+          "state": "native",
+          "notes": "Use /caveman from .github/skills/caveman/SKILL.md."
+        }
+      }
+    },
+    {
+      "id": "debug",
+      "name": "debug",
+      "title": "Debug",
+      "category": "debugging",
+      "summary": "Reproduce, diagnose, fix, and regression-test bugs.",
+      "notes": "Lite slash project skill; no bundled scripts or external runtime requirement.",
+      "defaultCommand": "debug",
+      "phase1": true,
+      "sourceSkill": "debug",
+      "providers": {
+        "copilot": "supported"
+      },
+      "support": {
+        "copilot": "native"
+      },
+      "providerSupport": {
+        "copilot": {
+          "state": "native",
+          "notes": "Use /debug from .github/skills/debug/SKILL.md."
+        }
+      }
+    },
+    {
+      "id": "debug.systematic",
+      "name": "debug.systematic",
+      "title": "Debug",
+      "category": "debugging",
+      "summary": "Reproduce, diagnose, fix, and regression-test bugs.",
+      "notes": "Lite slash project skill; no bundled scripts or external runtime requirement.",
+      "defaultCommand": "debug",
+      "phase1": true,
+      "sourceSkill": "debug",
+      "providers": {
+        "copilot": "supported"
+      },
+      "support": {
+        "copilot": "native"
+      },
+      "providerSupport": {
+        "copilot": {
+          "state": "native",
+          "notes": "Use /debug from .github/skills/debug/SKILL.md."
+        }
+      }
+    },
+    {
+      "id": "tdd",
+      "name": "tdd",
+      "title": "TDD",
+      "category": "verification",
+      "summary": "Use red-green-refactor for behavior changes.",
+      "notes": "Lite slash project skill; no bundled scripts or external runtime requirement.",
+      "defaultCommand": "tdd",
+      "phase1": true,
+      "sourceSkill": "tdd",
+      "providers": {
+        "copilot": "supported"
+      },
+      "support": {
+        "copilot": "native"
+      },
+      "providerSupport": {
+        "copilot": {
+          "state": "native",
+          "notes": "Use /tdd from .github/skills/tdd/SKILL.md."
+        }
+      }
+    },
+    {
+      "id": "testing.tdd",
+      "name": "testing.tdd",
+      "title": "TDD",
+      "category": "verification",
+      "summary": "Use red-green-refactor for behavior changes.",
+      "notes": "Lite slash project skill; no bundled scripts or external runtime requirement.",
+      "defaultCommand": "tdd",
+      "phase1": true,
+      "sourceSkill": "tdd",
+      "providers": {
+        "copilot": "supported"
+      },
+      "support": {
+        "copilot": "native"
+      },
+      "providerSupport": {
+        "copilot": {
+          "state": "native",
+          "notes": "Use /tdd from .github/skills/tdd/SKILL.md."
+        }
+      }
+    }
+  ]
+}

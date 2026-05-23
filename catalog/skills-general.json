@@ -1,0 +1,401 @@
+{
+  "schemaVersion": 1,
+  "canonicalRoot": ".github/skills",
+  "commandPrefix": "/",
+  "skills": [
+    {
+      "name": "codebase-research",
+      "capabilityId": "codebase-research",
+      "capabilityIds": [
+        "codebase-research",
+        "research.codebase"
+      ],
+      "source": ".github/skills/codebase-research/SKILL.md",
+      "sourcePath": ".github/skills/codebase-research/SKILL.md",
+      "canonicalPath": ".github/skills/codebase-research/SKILL.md",
+      "description": "Read repo evidence before planning or asking.",
+      "summary": "Read repo evidence before planning or asking.",
+      "support": "project-skill",
+      "aliases": [],
+      "slashCommands": [
+        "codebase-research"
+      ],
+      "projections": {
+        "copilot": {
+          "command": "/codebase-research",
+          "state": "supported"
+        }
+      },
+      "projection": "project-skill",
+      "phase1": true
+    },
+    {
+      "name": "grill-me",
+      "capabilityId": "grill-me",
+      "capabilityIds": [
+        "grill-me",
+        "planning.challenge"
+      ],
+      "source": ".github/skills/grill-me/SKILL.md",
+      "sourcePath": ".github/skills/grill-me/SKILL.md",
+      "canonicalPath": ".github/skills/grill-me/SKILL.md",
+      "description": "Ask one sharp clarification question after research.",
+      "summary": "Ask one sharp clarification question after research.",
+      "support": "project-skill",
+      "aliases": [],
+      "slashCommands": [
+        "grill-me"
+      ],
+      "projections": {
+        "copilot": {
+          "command": "/grill-me",
+          "state": "supported"
+        }
+      },
+      "projection": "project-skill",
+      "phase1": true
+    },
+    {
+      "name": "ralplan",
+      "capabilityId": "ralplan",
+      "capabilityIds": [
+        "ralplan",
+        "planning.consensus"
+      ],
+      "source": ".github/skills/ralplan/SKILL.md",
+      "sourcePath": ".github/skills/ralplan/SKILL.md",
+      "canonicalPath": ".github/skills/ralplan/SKILL.md",
+      "description": "Create implementation-ready plans and test shape.",
+      "summary": "Create implementation-ready plans and test shape.",
+      "support": "project-skill",
+      "aliases": [],
+      "slashCommands": [
+        "ralplan"
+      ],
+      "projections": {
+        "copilot": {
+          "command": "/ralplan",
+          "state": "supported"
+        }
+      },
+      "projection": "project-skill",
+      "phase1": true
+    },
+    {
+      "name": "team",
+      "capabilityId": "team",
+      "capabilityIds": [
+        "team",
+        "execution.parallel"
+      ],
+      "source": ".github/skills/team/SKILL.md",
+      "sourcePath": ".github/skills/team/SKILL.md",
+      "canonicalPath": ".github/skills/team/SKILL.md",
+      "description": "Split approved plans into parallel lanes.",
+      "summary": "Split approved plans into parallel lanes.",
+      "support": "project-skill",
+      "aliases": [],
+      "slashCommands": [
+        "team"
+      ],
+      "projections": {
+        "copilot": {
+          "command": "/team",
+          "state": "supported"
+        }
+      },
+      "projection": "project-skill",
+      "phase1": true
+    },
+    {
+      "name": "ralph",
+      "capabilityId": "ralph",
+      "capabilityIds": [
+        "ralph",
+        "execution.single-owner"
+      ],
+      "source": ".github/skills/ralph/SKILL.md",
+      "sourcePath": ".github/skills/ralph/SKILL.md",
+      "canonicalPath": ".github/skills/ralph/SKILL.md",
+      "description": "Run a single-owner execute-fix-verify loop.",
+      "summary": "Run a single-owner execute-fix-verify loop.",
+      "support": "project-skill",
+      "aliases": [],
+      "slashCommands": [
+        "ralph"
+      ],
+      "projections": {
+        "copilot": {
+          "command": "/ralph",
+          "state": "supported"
+        }
+      },
+      "projection": "project-skill",
+      "phase1": true
+    },
+    {
+      "name": "ultrawork",
+      "capabilityId": "ultrawork",
+      "capabilityIds": [
+        "ultrawork",
+        "execution.parallel"
+      ],
+      "source": ".github/skills/ultrawork/SKILL.md",
+      "sourcePath": ".github/skills/ultrawork/SKILL.md",
+      "canonicalPath": ".github/skills/ultrawork/SKILL.md",
+      "description": "Batch many independent small work items.",
+      "summary": "Batch many independent small work items.",
+      "support": "project-skill",
+      "aliases": [],
+      "slashCommands": [
+        "ultrawork"
+      ],
+      "projections": {
+        "copilot": {
+          "command": "/ultrawork",
+          "state": "supported"
+        }
+      },
+      "projection": "project-skill",
+      "phase1": true
+    },
+    {
+      "name": "ultraqa",
+      "capabilityId": "ultraqa",
+      "capabilityIds": [
+        "ultraqa",
+        "qa.behavioral"
+      ],
+      "source": ".github/skills/ultraqa/SKILL.md",
+      "sourcePath": ".github/skills/ultraqa/SKILL.md",
+      "canonicalPath": ".github/skills/ultraqa/SKILL.md",
+      "description": "Run adversarial behavior and regression QA.",
+      "summary": "Run adversarial behavior and regression QA.",
+      "support": "project-skill",
+      "aliases": [],
+      "slashCommands": [
+        "ultraqa"
+      ],
+      "projections": {
+        "copilot": {
+          "command": "/ultraqa",
+          "state": "supported"
+        }
+      },
+      "projection": "project-skill",
+      "phase1": true
+    },
+    {
+      "name": "autopilot",
+      "capabilityId": "autopilot",
+      "capabilityIds": [
+        "autopilot",
+        "execution.autonomous"
+      ],
+      "source": ".github/skills/autopilot/SKILL.md",
+      "sourcePath": ".github/skills/autopilot/SKILL.md",
+      "canonicalPath": ".github/skills/autopilot/SKILL.md",
+      "description": "Run the lightweight end-to-end skill flow.",
+      "summary": "Run the lightweight end-to-end skill flow.",
+      "support": "project-skill",
+      "aliases": [],
+      "slashCommands": [
+        "autopilot"
+      ],
+      "projections": {
+        "copilot": {
+          "command": "/autopilot",
+          "state": "supported"
+        }
+      },
+      "projection": "project-skill",
+      "phase1": true
+    },
+    {
+      "name": "code-review",
+      "capabilityId": "code-review",
+      "capabilityIds": [
+        "code-review",
+        "review.independent"
+      ],
+      "source": ".github/skills/code-review/SKILL.md",
+      "sourcePath": ".github/skills/code-review/SKILL.md",
+      "canonicalPath": ".github/skills/code-review/SKILL.md",
+      "description": "Review completed changes before merge or handoff.",
+      "summary": "Review completed changes before merge or handoff.",
+      "support": "project-skill",
+      "aliases": [
+        "review"
+      ],
+      "slashCommands": [
+        "code-review"
+      ],
+      "projections": {
+        "copilot": {
+          "command": "/code-review",
+          "state": "supported"
+        }
+      },
+      "projection": "project-skill",
+      "phase1": true
+    },
+    {
+      "name": "verify",
+      "capabilityId": "verify",
+      "capabilityIds": [
+        "verify",
+        "verification.evidence"
+      ],
+      "source": ".github/skills/verify/SKILL.md",
+      "sourcePath": ".github/skills/verify/SKILL.md",
+      "canonicalPath": ".github/skills/verify/SKILL.md",
+      "description": "Prove completion claims with evidence.",
+      "summary": "Prove completion claims with evidence.",
+      "support": "project-skill",
+      "aliases": [],
+      "slashCommands": [
+        "verify"
+      ],
+      "projections": {
+        "copilot": {
+          "command": "/verify",
+          "state": "supported"
+        }
+      },
+      "projection": "project-skill",
+      "phase1": true
+    },
+    {
+      "name": "jira-ticket",
+      "capabilityId": "jira-ticket",
+      "capabilityIds": [
+        "jira-ticket",
+        "tracker.ticket"
+      ],
+      "source": ".github/skills/jira-ticket/SKILL.md",
+      "sourcePath": ".github/skills/jira-ticket/SKILL.md",
+      "canonicalPath": ".github/skills/jira-ticket/SKILL.md",
+      "description": "Prepare Jira payloads with safe fallback.",
+      "summary": "Prepare Jira payloads with safe fallback.",
+      "support": "project-skill",
+      "aliases": [
+        "jira"
+      ],
+      "slashCommands": [
+        "jira-ticket"
+      ],
+      "projections": {
+        "copilot": {
+          "command": "/jira-ticket",
+          "state": "supported"
+        }
+      },
+      "projection": "project-skill",
+      "phase1": true
+    },
+    {
+      "name": "prototype",
+      "capabilityId": "prototype",
+      "capabilityIds": [
+        "prototype",
+        "design.prototype"
+      ],
+      "source": ".github/skills/prototype/SKILL.md",
+      "sourcePath": ".github/skills/prototype/SKILL.md",
+      "canonicalPath": ".github/skills/prototype/SKILL.md",
+      "description": "Build disposable experiments to answer design questions.",
+      "summary": "Build disposable experiments to answer design questions.",
+      "support": "project-skill",
+      "aliases": [],
+      "slashCommands": [
+        "prototype"
+      ],
+      "projections": {
+        "copilot": {
+          "command": "/prototype",
+          "state": "supported"
+        }
+      },
+      "projection": "project-skill",
+      "phase1": true
+    },
+    {
+      "name": "caveman",
+      "capabilityId": "caveman",
+      "capabilityIds": [
+        "caveman",
+        "communication.compact"
+      ],
+      "source": ".github/skills/caveman/SKILL.md",
+      "sourcePath": ".github/skills/caveman/SKILL.md",
+      "canonicalPath": ".github/skills/caveman/SKILL.md",
+      "description": "Use ultra-compact response style.",
+      "summary": "Use ultra-compact response style.",
+      "support": "project-skill",
+      "aliases": [],
+      "slashCommands": [
+        "caveman"
+      ],
+      "projections": {
+        "copilot": {
+          "command": "/caveman",
+          "state": "supported"
+        }
+      },
+      "projection": "project-skill",
+      "phase1": true
+    },
+    {
+      "name": "debug",
+      "capabilityId": "debug",
+      "capabilityIds": [
+        "debug",
+        "debug.systematic"
+      ],
+      "source": ".github/skills/debug/SKILL.md",
+      "sourcePath": ".github/skills/debug/SKILL.md",
+      "canonicalPath": ".github/skills/debug/SKILL.md",
+      "description": "Reproduce, diagnose, fix, and regression-test bugs.",
+      "summary": "Reproduce, diagnose, fix, and regression-test bugs.",
+      "support": "project-skill",
+      "aliases": [],
+      "slashCommands": [
+        "debug"
+      ],
+      "projections": {
+        "copilot": {
+          "command": "/debug",
+          "state": "supported"
+        }
+      },
+      "projection": "project-skill",
+      "phase1": true
+    },
+    {
+      "name": "tdd",
+      "capabilityId": "tdd",
+      "capabilityIds": [
+        "tdd",
+        "testing.tdd"
+      ],
+      "source": ".github/skills/tdd/SKILL.md",
+      "sourcePath": ".github/skills/tdd/SKILL.md",
+      "canonicalPath": ".github/skills/tdd/SKILL.md",
+      "description": "Use red-green-refactor for behavior changes.",
+      "summary": "Use red-green-refactor for behavior changes.",
+      "support": "project-skill",
+      "aliases": [],
+      "slashCommands": [
+        "tdd"
+      ],
+      "projections": {
+        "copilot": {
+          "command": "/tdd",
+          "state": "supported"
+        }
+      },
+      "projection": "project-skill",
+      "phase1": true
+    }
+  ]
+}

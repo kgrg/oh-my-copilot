@@ -14,7 +14,6 @@ The canonical skill source is the repo-local `.github/skills` directory. This is
 | `/ultrawork` | `ultrawork`, `execution.parallel` | Batch many independent small tasks. |
 | `/ultraqa` | `ultraqa`, `qa.behavioral` | Adversarial behavior and regression QA. |
 | `/omp-autopilot` | `omp-autopilot`, `execution.autonomous` | Lightweight end-to-end flow across the other skills. (Renamed from `/autopilot` to avoid Copilot CLI built-in collision.) |
-| `/pipeline` | `pipeline`, `execution.pipeline` | State-machine delivery orchestrator chaining research → plan → execute. |
 | `/code-review` | `code-review`, `review.independent` | Review completed changes before merge or handoff. |
 | `/verify` | `verify`, `verification.evidence` | Prove completion claims with evidence. |
 | `/jira-ticket` | `jira-ticket`, `tracker.ticket` | Render Jira create/comment/safe-update payloads. |

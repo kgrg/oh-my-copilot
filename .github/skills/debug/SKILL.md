@@ -1,6 +1,7 @@
 ---
 name: debug
 description: Reproduce, minimize, diagnose, fix, and regression-test a bug. Use with /debug for broken, failing, slow, or confusing behavior.
+argument-hint: "<symptom or error message>"
 ---
 
 # Debug

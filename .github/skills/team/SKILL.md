@@ -1,6 +1,7 @@
 ---
 name: team
 description: Split an approved plan into parallel tmux panes, each running an independent Copilot CLI agent. Use when work has independent lanes and you want visual parallel execution in split terminals. Use when user says /team, team, or wants parallel agent execution.
+argument-hint: "<number of lanes or plan reference>"
 ---
 
 # Team — tmux-based parallel agent execution
@@ -81,9 +82,21 @@ Each lane prompt must be **self-contained**. The agent in that pane has no conte
 - How to verify (run tests, npm audit, etc.)
 - Commit message to use
 
+### Good prompt example
+
+> You are working in /Users/me/project. In src/auth/login.ts, replace the bcrypt password check with argon2. Update the import, change the verify call, and run `npm test -- --grep auth` to confirm. Commit with message "refactor: switch password hashing to argon2".
+
+### Bad prompt example
+
+> Fix the auth module. (Too vague — which file? What fix? How to verify?)
+
+## Composition
+
+Use `/ralplan` before `/team` to produce the plan that defines lanes. Use `/verify` after all panes complete to confirm combined results don't conflict.
+
 ## Limitations
 
-- Each pane is an independent agent session — no shared state
-- Agents cannot communicate with each other
+- Each pane is an independent agent session — no shared state or messaging
+- Agents cannot communicate with each other — if tasks depend on each other, use `/ralph` instead
 - Leader (you) must manually verify results after all panes complete
 - Best for independent, non-conflicting work streams

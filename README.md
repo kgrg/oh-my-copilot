@@ -50,7 +50,7 @@ That's it.
 ## Why oh-my-copilot?
 
 - **Zero configuration** — works out of the box with sane defaults
-- **Team-first orchestration** — staged pipelines on a shared task list
+- **Team-first orchestration** — parallel tmux panes, each running an independent agent session
 - **Bare-flag bypass** — `omp --madmax` injects `--yolo` so non-interactive runs never block on a permission prompt
 - **Persistent execution** — Ralph, UltraQA, and Ultrawork keep going until the goal is verified
 - **MCP-powered shared state** — workers swap typed messages over an outbox/inbox cursor instead of summarising each other's summaries
@@ -76,7 +76,7 @@ That's it.
 ### Intelligent Orchestration
 
 - **7 specialized agents** — planner, architect, executor, verifier, code-reviewer, designer, researcher (all `--agent <name>` compatible with Copilot CLI)
-- **20 in-session skills** auto-discovered from `.github/skills/`
+- **18 in-session skills** auto-discovered from `.github/skills/`
 - **Smart pipeline routing** — `/research-codebase` → `/ralplan` → `/team` / `/ralph` / `/ultrawork` → `/code-review` → `/ultraqa`
 
 ### Developer Experience
@@ -100,7 +100,6 @@ These run **inside a Copilot CLI session** after the plugin is installed.
 | `/ultraqa`              | QA cycling until goal met                                 | `/ultraqa "build green, tests pass"`                 |
 | `/ralplan`              | Consensus planning                                        | `/ralplan "plan this feature"`                       |
 | `/team`                 | Parallel tmux agent panes                                 | `/team`                                              |
-| `/pipeline`             | Full delivery orchestrator                                | `/pipeline`                                          |
 | `/code-review`          | Diff-focused reviewer                                     | `/code-review`                                       |
 | `/research-codebase`    | Map an area of the codebase                               | `/research-codebase "auth middleware"`               |
 | `/debug`                | Disciplined diagnose-reproduce-fix loop                   | `/debug "flaky integration test"`                    |

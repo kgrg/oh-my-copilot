@@ -726,52 +726,6 @@
       }
     },
     {
-      "id": "pipeline",
-      "name": "pipeline",
-      "title": "Pipeline",
-      "category": "execution",
-      "summary": "State-machine delivery orchestrator chaining research, planning, and execution.",
-      "notes": "Orchestrates existing skills through a phased delivery pipeline.",
-      "defaultCommand": "pipeline",
-      "phase1": true,
-      "sourceSkill": "pipeline",
-      "providers": {
-        "copilot": "supported"
-      },
-      "support": {
-        "copilot": "native"
-      },
-      "providerSupport": {
-        "copilot": {
-          "state": "native",
-          "notes": "Use /pipeline from .github/skills/pipeline/SKILL.md."
-        }
-      }
-    },
-    {
-      "id": "execution.pipeline",
-      "name": "execution.pipeline",
-      "title": "Pipeline execution",
-      "category": "execution",
-      "summary": "State-machine delivery orchestrator.",
-      "notes": "Alias for pipeline capability.",
-      "defaultCommand": "pipeline",
-      "phase1": true,
-      "sourceSkill": "pipeline",
-      "providers": {
-        "copilot": "supported"
-      },
-      "support": {
-        "copilot": "native"
-      },
-      "providerSupport": {
-        "copilot": {
-          "state": "native",
-          "notes": "Use /pipeline from .github/skills/pipeline/SKILL.md."
-        }
-      }
-    },
-    {
       "id": "worktree",
       "name": "worktree",
       "title": "Worktree",
@@ -814,6 +768,52 @@
         "copilot": {
           "state": "native",
           "notes": "Use /worktree from .github/skills/worktree/SKILL.md."
+        }
+      }
+    },
+    {
+      "id": "create-skill",
+      "name": "create-skill",
+      "title": "Skill authoring guide",
+      "category": "meta",
+      "summary": "Guide for creating effective skills following best practices.",
+      "notes": "Helps create or update skills that extend agent capabilities.",
+      "defaultCommand": "create-skill",
+      "phase1": true,
+      "sourceSkill": "create-skill",
+      "providers": {
+        "copilot": "supported"
+      },
+      "support": {
+        "copilot": "native"
+      },
+      "providerSupport": {
+        "copilot": {
+          "state": "native",
+          "notes": "Use /create-skill from .github/skills/create-skill/SKILL.md."
+        }
+      }
+    },
+    {
+      "id": "meta.skill-authoring",
+      "name": "meta.skill-authoring",
+      "title": "Skill authoring",
+      "category": "meta",
+      "summary": "Guide for creating effective skills.",
+      "notes": "Alias for create-skill capability.",
+      "defaultCommand": "create-skill",
+      "phase1": true,
+      "sourceSkill": "create-skill",
+      "providers": {
+        "copilot": "supported"
+      },
+      "support": {
+        "copilot": "native"
+      },
+      "providerSupport": {
+        "copilot": {
+          "state": "native",
+          "notes": "Use /create-skill from .github/skills/create-skill/SKILL.md."
         }
       }
     }

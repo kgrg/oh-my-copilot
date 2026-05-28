@@ -1,6 +1,7 @@
 ---
 name: research-codebase
 description: Comprehensive codebase research that scales effort to task complexity, synthesises findings, and writes a timestamped document to docs/research/. Use when user says /research-codebase, asks to research or document a codebase area, or wants a deep-dive into how something works.
+argument-hint: "<area or question to research>"
 ---
 
 # Research Codebase

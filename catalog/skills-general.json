@@ -424,32 +424,6 @@
       "phase1": true
     },
     {
-      "name": "pipeline",
-      "capabilityId": "pipeline",
-      "capabilityIds": [
-        "pipeline",
-        "execution.pipeline"
-      ],
-      "source": ".github/skills/pipeline/SKILL.md",
-      "sourcePath": ".github/skills/pipeline/SKILL.md",
-      "canonicalPath": ".github/skills/pipeline/SKILL.md",
-      "description": "State-machine delivery orchestrator chaining research, planning, and execution.",
-      "summary": "State-machine delivery orchestrator chaining research, planning, and execution.",
-      "support": "project-skill",
-      "aliases": [],
-      "slashCommands": [
-        "pipeline"
-      ],
-      "projections": {
-        "copilot": {
-          "command": "/pipeline",
-          "state": "supported"
-        }
-      },
-      "projection": "project-skill",
-      "phase1": true
-    },
-    {
       "name": "worktree",
       "capabilityId": "worktree",
       "capabilityIds": [
@@ -469,6 +443,32 @@
       "projections": {
         "copilot": {
           "command": "/worktree",
+          "state": "supported"
+        }
+      },
+      "projection": "project-skill",
+      "phase1": true
+    },
+    {
+      "name": "create-skill",
+      "capabilityId": "create-skill",
+      "capabilityIds": [
+        "create-skill",
+        "meta.skill-authoring"
+      ],
+      "source": ".github/skills/create-skill/SKILL.md",
+      "sourcePath": ".github/skills/create-skill/SKILL.md",
+      "canonicalPath": ".github/skills/create-skill/SKILL.md",
+      "description": "Guide for creating effective skills following best practices.",
+      "summary": "Guide for creating effective skills following best practices.",
+      "support": "project-skill",
+      "aliases": [],
+      "slashCommands": [
+        "create-skill"
+      ],
+      "projections": {
+        "copilot": {
+          "command": "/create-skill",
           "state": "supported"
         }
       },

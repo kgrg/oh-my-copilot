@@ -1,4 +1,7 @@
-import { describe, expect, it } from "vitest";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync, chmodSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   launchCopilot,
   normalizeCopilotLaunchArgs,
@@ -97,6 +100,58 @@ describe("normalizeCopilotLaunchArgs", () => {
       "echo",
       "ok",
     ]);
+  });
+});
+
+describe("launchCopilot tmux wrapping", () => {
+  // Black-box test (matching the real-spawn style of the suite below): use a
+  // fake `tmux` on PATH that records its invocation, and a fake copilot bin.
+  let dir: string;
+  let tmuxLog: string;
+  let fakeCopilot: string;
+  const savedPath = process.env.PATH;
+  const savedTmux = process.env.TMUX;
+
+  beforeEach(() => {
+    dir = mkdtempSync(join(tmpdir(), "omp-launch-"));
+    tmuxLog = join(dir, "tmux-calls.txt");
+    fakeCopilot = join(dir, "fake-copilot");
+    // fake tmux: answer `-V` so tmuxAvailable() sees it, log everything else
+    const fakeTmux = join(dir, "tmux");
+    writeFileSync(
+      fakeTmux,
+      `#!/bin/sh\nif [ "$1" = "-V" ]; then echo "tmux 3.x-fake"; exit 0; fi\nprintf '%s\\n' "$*" >> ${tmuxLog}\nexit 0\n`,
+    );
+    chmodSync(fakeTmux, 0o755);
+    writeFileSync(fakeCopilot, `#!/bin/sh\nprintf '%s' "$*" > ${join(dir, "copilot-args.txt")}\nexit 0\n`);
+    chmodSync(fakeCopilot, 0o755);
+    process.env.PATH = `${dir}:${savedPath}`;
+  });
+
+  afterEach(() => {
+    if (savedPath === undefined) delete process.env.PATH;
+    else process.env.PATH = savedPath;
+    if (savedTmux === undefined) delete process.env.TMUX;
+    else process.env.TMUX = savedTmux;
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  it("wraps --madmax in a fresh tmux session and maps it to --yolo when not inside tmux", async () => {
+    delete process.env.TMUX;
+    const result = await launchCopilot({ args: ["--madmax", "probe"], bin: fakeCopilot, cwd: dir });
+    expect(result.ok).toBe(true);
+    const call = readFileSync(tmuxLog, "utf8").trim();
+    expect(call).toMatch(/^new-session -s omp-\d+ -c /);
+    expect(call).toContain(dir); // session opened in the requested cwd
+    expect(call).toContain(`${fakeCopilot} probe --yolo`); // bypass mapped, bin invoked
+  });
+
+  it("launches directly (no tmux wrap) when already inside tmux", async () => {
+    process.env.TMUX = "/tmp/fake,1234,0";
+    const result = await launchCopilot({ args: ["--madmax", "probe"], bin: fakeCopilot, cwd: dir });
+    expect(result.ok).toBe(true);
+    expect(() => readFileSync(tmuxLog, "utf8")).toThrow(); // tmux never invoked
+    expect(readFileSync(join(dir, "copilot-args.txt"), "utf8")).toBe("probe --yolo");
   });
 });
 

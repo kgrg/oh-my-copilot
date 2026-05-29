@@ -1,4 +1,7 @@
-import { describe, expect, it } from "vitest";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync, chmodSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   launchCopilot,
   normalizeCopilotLaunchArgs,
@@ -97,6 +100,82 @@ describe("normalizeCopilotLaunchArgs", () => {
       "echo",
       "ok",
     ]);
+  });
+});
+
+function restoreEnv(key: string, value: string | undefined): void {
+  if (value === undefined) delete process.env[key];
+  else process.env[key] = value;
+}
+
+describe("launchCopilot tmux wrapping", () => {
+  // Black-box test (matching the real-spawn style of the suite below): use a
+  // fake `tmux` on PATH that records its invocation, and a fake copilot bin.
+  let dir: string;
+  let tmuxLog: string;
+  let copilotLog: string;
+  let fakeCopilot: string;
+  const savedPath = process.env.PATH;
+  const savedTmux = process.env.TMUX;
+  const savedTmuxLogEnv = process.env.OMP_TEST_TMUX_LOG;
+  const savedCopilotLogEnv = process.env.OMP_TEST_COPILOT_LOG;
+
+  beforeEach(() => {
+    dir = mkdtempSync(join(tmpdir(), "omp-launch-"));
+    tmuxLog = join(dir, "tmux-argv.json");
+    copilotLog = join(dir, "copilot-argv.json");
+    fakeCopilot = join(dir, "fake-copilot");
+    // Node fakes record their argv verbatim as JSON (preserving arg boundaries)
+    // and read the log destination from the environment, so no filesystem path
+    // is embedded in the script body (robust to spaces/metachars in TMPDIR).
+    const fakeTmux = join(dir, "tmux");
+    writeFileSync(
+      fakeTmux,
+      '#!/usr/bin/env node\n' +
+        'const a = process.argv.slice(2);\n' +
+        'if (a[0] === "-V") { console.log("tmux 3.x-fake"); process.exit(0); }\n' +
+        'require("node:fs").writeFileSync(process.env.OMP_TEST_TMUX_LOG, JSON.stringify(a));\n',
+    );
+    chmodSync(fakeTmux, 0o755);
+    writeFileSync(
+      fakeCopilot,
+      '#!/usr/bin/env node\n' +
+        'require("node:fs").writeFileSync(process.env.OMP_TEST_COPILOT_LOG, JSON.stringify(process.argv.slice(2)));\n',
+    );
+    chmodSync(fakeCopilot, 0o755);
+    process.env.PATH = `${dir}:${savedPath}`;
+    process.env.OMP_TEST_TMUX_LOG = tmuxLog;
+    process.env.OMP_TEST_COPILOT_LOG = copilotLog;
+  });
+
+  afterEach(() => {
+    restoreEnv("PATH", savedPath);
+    restoreEnv("TMUX", savedTmux);
+    restoreEnv("OMP_TEST_TMUX_LOG", savedTmuxLogEnv);
+    restoreEnv("OMP_TEST_COPILOT_LOG", savedCopilotLogEnv);
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  it("wraps --madmax in a fresh tmux session and maps it to --yolo when not inside tmux", async () => {
+    delete process.env.TMUX;
+    const result = await launchCopilot({ args: ["--madmax", "probe"], bin: fakeCopilot, cwd: dir });
+    expect(result.ok).toBe(true);
+    const argv = JSON.parse(readFileSync(tmuxLog, "utf8")) as string[];
+    expect(argv).toHaveLength(6);
+    expect(argv[0]).toBe("new-session");
+    expect(argv[1]).toBe("-s");
+    expect(argv[2]).toMatch(/^omp-\d+$/); // generated session name
+    expect(argv[3]).toBe("-c");
+    expect(argv[4]).toBe(dir); // session opened in exactly the requested cwd
+    expect(argv[5]).toBe(`${fakeCopilot} probe --yolo`); // bin + bypass-mapped command
+  });
+
+  it("launches directly (no tmux wrap) when already inside tmux", async () => {
+    process.env.TMUX = "/tmp/fake,1234,0";
+    const result = await launchCopilot({ args: ["--madmax", "probe"], bin: fakeCopilot, cwd: dir });
+    expect(result.ok).toBe(true);
+    expect(() => readFileSync(tmuxLog, "utf8")).toThrow(); // tmux never invoked
+    expect(JSON.parse(readFileSync(copilotLog, "utf8"))).toEqual(["probe", "--yolo"]);
   });
 });
 

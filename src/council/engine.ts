@@ -94,14 +94,20 @@ async function runMember(
 
   let { status, dropReason } = classify(res);
   let output;
-  if (status === "ok") {
+  if (status === "ok" || status === "timeout") {
     const parsed = parseMemberOutput(res.stdout);
     if (parsed) {
+      // Upgrade timed-out members that produced valid output before the kill.
+      if (status === "timeout") {
+        status = "ok";
+        dropReason = undefined;
+      }
       output = parsed;
-    } else {
+    } else if (status === "ok") {
       status = "unparseable";
       dropReason = "no schema-valid JSON in output";
     }
+    // timeout with no parseable output stays "timeout"
   }
 
   const jsonPath = join(tmpDir, `m${index}.json`);

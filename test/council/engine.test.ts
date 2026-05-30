@@ -66,7 +66,7 @@ describe("runCouncil", () => {
     expect(spy.calls.filter((c) => isSynth(c.prompt))).toHaveLength(1);
   });
 
-  it("graceful degradation: 1 timeout, 2 survive (minSurvivors 2) -> ok, dropped 1", async () => {
+  it("graceful degradation: 1 timeout (no output), 2 survive (minSurvivors 2) -> ok, dropped 1", async () => {
     const deps = makeDeps({
       m1: { stdout: memberJson("a"), exitCode: 0 },
       m2: { stdout: "", exitCode: 124, timedOut: true },
@@ -78,6 +78,21 @@ describe("runCouncil", () => {
     expect(res.dropped).toBe(1);
     const dropped = res.members.find((m) => m.spec.model === "m2");
     expect(dropped?.status).toBe("timeout");
+  });
+
+  it("timeout recovery: timed-out member with valid JSON is upgraded to ok", async () => {
+    const deps = makeDeps({
+      m1: { stdout: memberJson("a"), exitCode: 0 },
+      m2: { stdout: memberJson("recovered"), exitCode: 124, timedOut: true },
+      m3: { stdout: memberJson("c"), exitCode: 0 },
+    });
+    const res = await runCouncil(baseSpec({ minSurvivors: 2 }), deps);
+    expect(res.ok).toBe(true);
+    expect(res.survivors).toBe(3);
+    expect(res.dropped).toBe(0);
+    const m2 = res.members.find((m) => m.spec.model === "m2");
+    expect(m2?.status).toBe("ok");
+    expect(m2?.output?.verdict).toBe("recovered");
   });
 
   it("too few survivors -> ok false, synth NOT called", async () => {

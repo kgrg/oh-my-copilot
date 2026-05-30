@@ -26,9 +26,10 @@ synthesizer model reasons over their answers — using each member's weight as a
 3. **Synthesis** — a low-context synthesizer model merges survivors into a final
    `verdict`, `confidence`, `rationale`, and `minority_report`. Evidence quality
    can override weight.
-4. **Graceful degradation** — timed-out, errored, unavailable, or unparseable
-   members are dropped; the council still synthesizes from the rest, and only
-   fails if fewer than `min-survivors` (default 2) remain.
+4. **Graceful degradation** — errored, unavailable, or unparseable members are
+   dropped; timed-out members that produced valid JSON are recovered as
+   survivors. The council synthesizes from all survivors and only fails if fewer
+   than `min-survivors` (default 2) remain.
 
 ## Agent execution steps (FOLLOW EXACTLY)
 
@@ -48,7 +49,7 @@ degradation, and synthesis for you — do NOT try to call models yourself:
 ```
 omp council "<question>" [--models a,b,c | model:role:weight,...] \
   [--context <text|@file>] [--rubric <text|@file>] \
-  [--synth <model>] [--probe] [--timeout <ms>] \
+  [--synth <model>] [--probe] [--timeout <ms>] [--synth-timeout <ms>] \
   [--min-survivors <n>] [--max-concurrency <n>] [--tmp-dir <dir>] [--json]
 ```
 
@@ -62,6 +63,12 @@ omp council "<question>" [--models a,b,c | model:role:weight,...] \
   default; the normal run already reports unavailable models inline).
 - `--json` — emit the full structured result for programmatic use; omit it for a
   readable verdict + dropped-member summary.
+- `--synth-timeout <ms>` — synthesizer timeout (default: 2× `--timeout`). The
+  synth processes all member outputs so may need longer than individual members.
+  The synth prompt does NOT include the shared context (members already digested
+  it), so this is mainly needed for councils with many members or long rationale.
+- Timed-out members that produced valid JSON before the kill signal are
+  automatically recovered as survivors — they are not dropped.
 
 If `omp council` is not found (the published `omp` predates this feature), fall
 back to the local build from the repo root: `node dist/src/cli.js council "<question>" ...`
@@ -94,6 +101,7 @@ default roster is used.
     "synthesizer": "gpt-4.1",
     "minSurvivors": 2,
     "maxConcurrency": 4,
+    "synthTimeoutMs": 240000,
     "probe": false,
     "members": [
       { "model": "gpt-5-mini", "role": "critic", "weight": 0.4 },

@@ -32,7 +32,7 @@ function printResult(result: CliResult, json: boolean): void {
 }
 
 function help(): string {
-  return `oh-my-copilot\n\nRun \`omp\` with no arguments to launch copilot (permissions bypass OFF).\nUse \`omp help\` to show this list.\n\nCommands:\n  (no args)                                     launch copilot (bypass OFF by default)\n  version [--json]\n  list [--json]\n  setup [--dry-run] [--scope project|user] [--plugin-root <dir>] [--json]\n  doctor [--json] [--copilot-bin <path>] [--skip-copilot]\n  launch -- <args...>\n  --madmax [args...]                          (bare-flag launch with permissions bypass; alias of --yolo)\n  team <N:role> "<task>" [--name <name>] [--json]\n  team status <name> [--json]\n  team shutdown <name> [--json]\n  team api claim-task --input '<json>' [--json]\n  team api transition-task-status --input '<json>' [--json]\n  team api send-message --input '<json>' [--json]\n  team api broadcast --input '<json>' [--json]\n  team api mailbox-list --input '<json>' [--json]\n  team api mailbox-mark-delivered --input '<json>' [--json]\n  council "<question>" [--models a,b,c|m:role:weight] [--context <text|@file>] [--rubric <text|@file>] [--synth <model>] [--probe] [--timeout <ms>] [--synth-timeout <ms>] [--min-survivors <n>] [--max-concurrency <n>] [--tmp-dir <dir>] [--json]\n  mcp                                           (run MCP server over stdio)\n  ralph start "<task>" [--max-iterations <n>] [--session-id <id>] [--json]\n  ralph status [--json]\n  ralph tick [--json]\n  ralph cancel [--json]\n  ultrawork start "<objective>" [--task-count <n>] [--summary <s>] [--json]\n  ultrawork status [--json]\n  ultrawork cancel [--json]\n  ultraqa start "<goal>" [--max-cycles <n>] [--json]\n  ultraqa cycle pass|fail|pending [--json]\n  ultraqa status [--json]\n  ultraqa cancel [--json]\n  catalog list [--json]\n  catalog validate [--json]\n  catalog capability <id> [--json]\n  project inspect [--json]\n  skill install <skill-dir> [--root <repo>] [--scope project|user] [--dry-run] [--json]\n  lint:skills [--root <repo>]\n  sync:dry-run [--root <repo>]\n  jira:dry-run [--root <repo>]\n  jira render <plan-file> [--root <repo>] [--json]\n  jira apply <ticket-key-or-plan-file> --comment|--update|--transition|--link [--dry-run] [--json]\n`;
+  return `oh-my-copilot\n\nRun \`omp\` with no arguments to launch copilot (permissions bypass OFF).\nUse \`omp help\` to show this list.\n\nCommands:\n  (no args)                                     launch copilot (bypass OFF by default)\n  version [--json]\n  list [--json]\n  setup [--dry-run] [--scope project|user] [--plugin-root <dir>] [--json]\n  doctor [--json] [--copilot-bin <path>] [--skip-copilot]\n  launch -- <args...>\n  --madmax [args...]                          (bare-flag launch with permissions bypass; alias of --yolo)\n  team <N:role> "<task>" [--name <name>] [--json]\n  team status <name> [--json]\n  team shutdown <name> [--json]\n  team api claim-task --input '<json>' [--json]\n  team api transition-task-status --input '<json>' [--json]\n  team api send-message --input '<json>' [--json]\n  team api broadcast --input '<json>' [--json]\n  team api mailbox-list --input '<json>' [--json]\n  team api mailbox-mark-delivered --input '<json>' [--json]\n  council "<question>" [--models a,b,c|m:role:weight] [--context <text|@file>] [--rubric <text|@file>] [--synth <model>] [--probe] [--timeout <ms>] [--synth-timeout <ms>] [--min-survivors <n>] [--max-concurrency <n>] [--tmp-dir <dir>] [--json]\n  mcp                                           (run MCP server over stdio)\n  ralph start "<task>" [--max-iterations <n>] [--session-id <id>] [--json]\n  ralph status [--json]\n  ralph tick [--json]\n  ralph cancel [--json]\n  ultrawork start "<objective>" [--task-count <n>] [--summary <s>] [--json]\n  ultrawork status [--json]\n  ultrawork cancel [--json]\n  ultraqa start "<goal>" [--max-cycles <n>] [--json]\n  ultraqa cycle pass|fail|pending [--json]\n  ultraqa status [--json]\n  ultraqa cancel [--json]\n  goal set "<objective>" [--json]\n  goal read [--json]\n  daily-log set-goal "<text>" [--json]\n  daily-log add "<text>" [--json]\n  daily-log read [--days <n>] [--json]\n  catalog list [--json]\n  catalog validate [--json]\n  catalog capability <id> [--json]\n  project inspect [--json]\n  skill install <skill-dir> [--root <repo>] [--scope project|user] [--dry-run] [--json]\n  lint:skills [--root <repo>]\n  sync:dry-run [--root <repo>]\n  jira:dry-run [--root <repo>]\n  jira render <plan-file> [--root <repo>] [--json]\n  jira apply <ticket-key-or-plan-file> --comment|--update|--transition|--link [--dry-run] [--json]\n`;
 }
 
 async function resolveExistingInputPath(value: string): Promise<string> {
@@ -155,6 +155,53 @@ export async function runCli(argv = process.argv.slice(2)): Promise<CliResult> {
   }
   if (group === "ultraqa") {
     return await handleModeCommand("ultraqa", argv, json);
+  }
+
+  if (group === "goal") {
+    const { readRepoGoal, writeRepoGoal } = await import("./goal.js");
+    const cwd = flagValue(argv, "--root") ?? process.cwd();
+    if (command === "set") {
+      if (!value || !value.trim()) {
+        return { ok: false, exitCode: 1, message: 'usage: omp goal set "<objective>"' };
+      }
+      const goal = writeRepoGoal(cwd, value);
+      return json ? { ok: true, output: { ok: true, goal } } : { ok: true, message: `repo goal set: ${goal}` };
+    }
+    if (command === "read" || command === undefined) {
+      const goal = readRepoGoal(cwd);
+      return json ? { ok: true, output: { goal } } : { ok: true, message: goal || "(no repo goal set)" };
+    }
+    return { ok: false, exitCode: 1, message: 'Unknown goal subcommand. Try: goal set "<text>" | goal read' };
+  }
+
+  if (group === "daily-log") {
+    const { setDailyGoal, addLogEntry, readDailyLog } = await import("./daily-log.js");
+    const cwd = flagValue(argv, "--root") ?? process.cwd();
+    if (command === "set-goal") {
+      if (!value || !value.trim()) {
+        return { ok: false, exitCode: 1, message: 'usage: omp daily-log set-goal "<text>"' };
+      }
+      const res = setDailyGoal(cwd, value);
+      return json ? { ok: true, output: { ok: true, ...res } } : { ok: true, message: `daily goal set (${res.date}): ${res.goal}` };
+    }
+    if (command === "add") {
+      if (!value || !value.trim()) {
+        return { ok: false, exitCode: 1, message: 'usage: omp daily-log add "<text>"' };
+      }
+      const res = addLogEntry(cwd, value);
+      return json ? { ok: true, output: { ok: true, ...res } } : { ok: true, message: `logged (${res.date}); ${res.count} entr${res.count === 1 ? "y" : "ies"} today` };
+    }
+    if (command === "read" || command === undefined) {
+      const daysRaw = flagValue(argv, "--days");
+      const days = daysRaw !== undefined && Number.isFinite(Number(daysRaw)) ? Number(daysRaw) : 1;
+      const text = readDailyLog(cwd, days);
+      return json ? { ok: true, output: { log: text } } : { ok: true, message: text || "(no daily log entries)" };
+    }
+    return {
+      ok: false,
+      exitCode: 1,
+      message: 'Unknown daily-log subcommand. Try: daily-log set-goal "<text>" | add "<text>" | read [--days N]',
+    };
   }
 
   if (group === "catalog") {

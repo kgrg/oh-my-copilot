@@ -1,6 +1,10 @@
-import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
-import { jsonResult, textResult, type ToolDefinition } from "../types.js";
+
+// Core read/write logic for the per-project daily log at
+// .omp/memory/daily/<YYYY-MM-DD>.md (# date / ## Goal / ## Log). Exposed to the
+// model through the `omp daily-log` CLI subcommands (NOT MCP), so the project
+// dir is the CLI's cwd and never ambiguous.
 
 interface DayDoc {
   goal: string;
@@ -75,7 +79,29 @@ function writeDay(cwd: string, doc: DayDoc, date = todayStr()): void {
   renameSync(tmp, p);
 }
 
-function readRecent(cwd: string, days: number): string {
+/** Set/replace today's goal. Returns the date and stored goal. */
+export function setDailyGoal(cwd: string, goal: string): { date: string; goal: string } {
+  const doc = readDay(cwd);
+  doc.goal = String(goal ?? "").trim();
+  writeDay(cwd, doc);
+  return { date: todayStr(), goal: doc.goal };
+}
+
+/** Append a timestamped entry (`- HH:MM — <text>`) to today's log. */
+export function addLogEntry(cwd: string, text: string): { date: string; count: number } {
+  // Collapse to a single line so an entry can never contain a `## Goal`/`## Log`
+  // marker that parseDay would later misread as a section boundary.
+  const clean = String(text ?? "")
+    .replace(/\s*\n\s*/g, " ")
+    .trim();
+  const doc = readDay(cwd);
+  doc.log.push(`- ${timeStr()} — ${clean}`);
+  writeDay(cwd, doc);
+  return { date: todayStr(), count: doc.log.length };
+}
+
+/** Read today + the previous `days` days, newest-first, capped to ~4KB. */
+export function readDailyLog(cwd: string, days: number): string {
   const dir = dailyDir(cwd);
   if (!existsSync(dir)) return "";
   const files = readdirSync(dir)
@@ -97,61 +123,3 @@ function readRecent(cwd: string, days: number): string {
   }
   return out.trim();
 }
-
-export const dailyLogTools: ToolDefinition[] = [
-  {
-    name: "daily_log_set_goal",
-    category: "daily_log",
-    description: "Set/replace today's Goal in .omp/memory/daily/<today>.md.",
-    inputSchema: {
-      type: "object",
-      properties: { goal: { type: "string" }, cwd: { type: "string" } },
-      required: ["goal"],
-    },
-    handler: (args) => {
-      const cwd = (args.cwd as string) ?? process.cwd();
-      const doc = readDay(cwd);
-      doc.goal = String(args.goal ?? "");
-      writeDay(cwd, doc);
-      return jsonResult({ ok: true, date: todayStr(), goal: doc.goal });
-    },
-  },
-  {
-    name: "daily_log_add",
-    category: "daily_log",
-    description: "Append a timestamped entry to today's Log in .omp/memory/daily/<today>.md.",
-    inputSchema: {
-      type: "object",
-      properties: { text: { type: "string" }, cwd: { type: "string" } },
-      required: ["text"],
-    },
-    handler: (args) => {
-      const cwd = (args.cwd as string) ?? process.cwd();
-      // Collapse to a single line so an entry can never contain a `## Goal`/`## Log`
-      // marker that parseDay would later misread as a section boundary.
-      const text = String(args.text ?? "")
-        .replace(/\s*\n\s*/g, " ")
-        .trim();
-      if (!text) return jsonResult({ ok: false, error: "text is required" });
-      const doc = readDay(cwd);
-      doc.log.push(`- ${timeStr()} — ${text}`);
-      writeDay(cwd, doc);
-      return jsonResult({ ok: true, date: todayStr(), count: doc.log.length });
-    },
-  },
-  {
-    name: "daily_log_read",
-    category: "daily_log",
-    description:
-      "Read the daily log for today plus the previous `days` days (default 1). Char-capped to ~4KB.",
-    inputSchema: {
-      type: "object",
-      properties: { days: { type: "number" }, cwd: { type: "string" } },
-    },
-    handler: (args) => {
-      const cwd = (args.cwd as string) ?? process.cwd();
-      const days = typeof args.days === "number" ? (args.days as number) : 1;
-      return textResult(readRecent(cwd, days) || "(no daily log entries)");
-    },
-  },
-];

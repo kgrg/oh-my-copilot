@@ -9,20 +9,21 @@ The repo's **durable objective** — the north-star for this project — stored 
 `.omp/goal.md`. It is distinct from a daily log's per-day goal: this is the long-lived "what
 we want to achieve in this repo", set rarely and updated only when the objective changes.
 
-It is read and written through MCP tools:
+It is read and written through the `omp` CLI (run these as shell commands):
 
-- `goal_set { goal }` — set/replace the repo objective (one concise line).
-- `goal_read` — return the current repo objective.
+- `omp goal set "<objective>"` — set/replace the repo objective (one concise line).
+- `omp goal read` — print the current repo objective.
 
-`cwd` defaults to the current project, so every repo keeps its own goal automatically.
+The command writes under the current project's `.omp/`, so every repo keeps its own goal
+automatically.
 
 ## When to use
 
-- **`/goal <text>`** — the user states the objective; call `goal_set` with one concise line.
-- **`/goal`** (no text) — call `goal_read` and show the current objective. If none is set,
+- **`/goal <text>`** — the user states the objective; run `omp goal set "<one concise line>"`.
+- **`/goal`** (no text) — run `omp goal read` and show the current objective. If none is set,
   offer to set one.
 - The SessionStart hook surfaces the goal as a `[REPO GOAL] …` line, so it is already in
-  context at the start of each session — only call `goal_read` when the user asks explicitly.
+  context at the start of each session — only run `omp goal read` when the user asks explicitly.
 
 ## Notes
 

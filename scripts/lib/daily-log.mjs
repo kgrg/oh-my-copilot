@@ -3,7 +3,7 @@ import { dirname, join, resolve } from "node:path";
 
 const DAY_FILE_RE = /^\d{4}-\d{2}-\d{2}\.md$/;
 const DEFAULT_NUDGE =
-  "Your last session made progress but recorded nothing in the daily log — call daily_log_add to capture what changed and any key decisions, so this session has that context.";
+  'Your last session made progress but recorded nothing in the daily log — run `omp daily-log add "<text>"` to capture what changed and any key decisions, so this session has that context.';
 
 // A session with at least this many user prompts counts as "did real work".
 const WORK_THRESHOLD = 3;

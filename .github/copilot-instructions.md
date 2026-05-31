@@ -43,9 +43,9 @@ memory aids, not a transcript. Float kills their value.
   established or genuinely shifts. Not every session.
 - **Daily log** (`.omp/memory/daily/<date>.md`, via `/daily-log`):
   - When a heavy mode (`/ralph`, `/ralplan`, `/omp-autopilot`, `/team`, `/ultrawork`,
-    `/ultraqa`) starts, set today's goal from its objective (`daily_log_set_goal`).
-  - When such a mode finishes, add **one** concise summary entry (`daily_log_add`): what
-    changed, key decisions, next step.
+    `/ultraqa`) starts, set today's goal from its objective: `omp daily-log set-goal "<text>"`.
+  - When such a mode finishes, add **one** concise summary entry — `omp daily-log add "<text>"`:
+    what changed, key decisions, next step.
   - Otherwise add an entry only at a genuine milestone you judge worth remembering.
 - **Caps:** at most a handful of entries per day; record decisions and outcomes, not narration.
   Skip trivial or very short sessions entirely. Do NOT log per skill invocation.

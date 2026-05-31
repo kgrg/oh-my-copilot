@@ -32,7 +32,7 @@ function printResult(result: CliResult, json: boolean): void {
 }
 
 function help(): string {
-  return `oh-my-copilot\n\nRun \`omp\` with no arguments to launch copilot (permissions bypass OFF).\nUse \`omp help\` to show this list.\n\nCommands:\n  (no args)                                     launch copilot (bypass OFF by default)\n  version [--json]\n  list [--json]\n  setup [--dry-run] [--scope project|user] [--plugin-root <dir>] [--json]\n  doctor [--json] [--copilot-bin <path>] [--skip-copilot]\n  launch -- <args...>\n  --madmax [args...]                          (bare-flag launch with permissions bypass; alias of --yolo)\n  team <N:role> "<task>" [--name <name>] [--json]\n  team status <name> [--json]\n  team shutdown <name> [--json]\n  team api claim-task --input '<json>' [--json]\n  team api transition-task-status --input '<json>' [--json]\n  team api send-message --input '<json>' [--json]\n  team api broadcast --input '<json>' [--json]\n  team api mailbox-list --input '<json>' [--json]\n  team api mailbox-mark-delivered --input '<json>' [--json]\n  council "<question>" [--models a,b,c|m:role:weight] [--context <text|@file>] [--rubric <text|@file>] [--synth <model>] [--probe] [--timeout <ms>] [--synth-timeout <ms>] [--min-survivors <n>] [--max-concurrency <n>] [--tmp-dir <dir>] [--json]\n  mcp                                           (run MCP server over stdio)\n  ralph start "<task>" [--max-iterations <n>] [--session-id <id>] [--json]\n  ralph status [--json]\n  ralph tick [--json]\n  ralph cancel [--json]\n  ultrawork start "<objective>" [--task-count <n>] [--summary <s>] [--json]\n  ultrawork status [--json]\n  ultrawork cancel [--json]\n  ultraqa start "<goal>" [--max-cycles <n>] [--json]\n  ultraqa cycle pass|fail|pending [--json]\n  ultraqa status [--json]\n  ultraqa cancel [--json]\n  catalog list [--json]\n  catalog validate [--json]\n  catalog capability <id> [--json]\n  project inspect [--json]\n  skill install <skill-dir> [--root <repo>] [--scope project|user] [--dry-run] [--json]\n  lint:skills [--root <repo>]\n  sync:dry-run [--root <repo>]\n  jira:dry-run [--root <repo>]\n  jira render <plan-file> [--root <repo>] [--json]\n  jira apply <ticket-key-or-plan-file> --comment|--update|--transition|--link [--dry-run] [--json]\n`;
+  return `oh-my-copilot\n\nRun \`omp\` with no arguments to launch copilot (permissions bypass OFF).\nUse \`omp help\` to show this list.\n\nCommands:\n  (no args)                                     launch copilot (bypass OFF by default)\n  version [--json]\n  list [--json]\n  setup [--dry-run] [--scope project|user] [--plugin-root <dir>] [--json]\n  doctor [--json] [--copilot-bin <path>] [--skip-copilot]\n  launch -- <args...>\n  --madmax [args...]                          (bare-flag launch with permissions bypass; alias of --yolo)\n  team <N:role> "<task>" [--name <name>] [--json]\n  team status <name> [--json]\n  team shutdown <name> [--json]\n  team api claim-task --input '<json>' [--json]\n  team api transition-task-status --input '<json>' [--json]\n  team api send-message --input '<json>' [--json]\n  team api broadcast --input '<json>' [--json]\n  team api mailbox-list --input '<json>' [--json]\n  team api mailbox-mark-delivered --input '<json>' [--json]\n  council "<question>" [--models a,b,c|m:role:weight] [--context <text|@file>] [--rubric <text|@file>] [--synth <model>] [--probe] [--timeout <ms>] [--synth-timeout <ms>] [--min-survivors <n>] [--max-concurrency <n>] [--tmp-dir <dir>] [--json]\n  comms status [--session <name>] [--json]      (is copilot on + online? auto-discovers session)\n  comms send --text "<prompt>" [--force] [--session <name>] [--json]\n  comms recv [--wait] [--lines <n>] [--timeout <ms>] [--session <name>] [--json]\n  comms ask --text "<prompt>" [--force] [--lines <n>] [--timeout <ms>] [--session <name>] [--json]\n  (--session is optional when exactly one omp-<digits> tmux session is running)\n  mcp                                           (run MCP server over stdio)\n  ralph start "<task>" [--max-iterations <n>] [--session-id <id>] [--json]\n  ralph status [--json]\n  ralph tick [--json]\n  ralph cancel [--json]\n  ultrawork start "<objective>" [--task-count <n>] [--summary <s>] [--json]\n  ultrawork status [--json]\n  ultrawork cancel [--json]\n  ultraqa start "<goal>" [--max-cycles <n>] [--json]\n  ultraqa cycle pass|fail|pending [--json]\n  ultraqa status [--json]\n  ultraqa cancel [--json]\n  catalog list [--json]\n  catalog validate [--json]\n  catalog capability <id> [--json]\n  project inspect [--json]\n  skill install <skill-dir> [--root <repo>] [--scope project|user] [--dry-run] [--json]\n  lint:skills [--root <repo>]\n  sync:dry-run [--root <repo>]\n  jira:dry-run [--root <repo>]\n  jira render <plan-file> [--root <repo>] [--json]\n  jira apply <ticket-key-or-plan-file> --comment|--update|--transition|--link [--dry-run] [--json]\n`;
 }
 
 async function resolveExistingInputPath(value: string): Promise<string> {
@@ -136,6 +136,10 @@ export async function runCli(argv = process.argv.slice(2)): Promise<CliResult> {
 
   if (group === "council") {
     return await handleCouncilCommand(argv, json);
+  }
+
+  if (group === "comms") {
+    return await handleCommsCommand(argv, json);
   }
 
   if (group === "mcp") {
@@ -432,6 +436,126 @@ async function handleCouncilCommand(argv: string[], json: boolean): Promise<CliR
   }
   lines.push(`Artifacts: ${result.tmpDir}`);
   return { ok: result.ok, exitCode: result.ok ? 0 : 1, message: lines.join("\n") };
+}
+
+async function handleCommsCommand(argv: string[], json: boolean): Promise<CliResult> {
+  const [, command] = argv;
+  const { resolveSession } = await import("./comms/resolve-session.js");
+  // `--session` present but with a missing/empty/flag-like value must fail loud,
+  // never silently fall through to env/discovery and target an unintended session.
+  const flagSession = flagValue(argv, "--session");
+  if (
+    hasFlag(argv, "--session") &&
+    (flagSession === undefined || flagSession === "" || flagSession.startsWith("-"))
+  ) {
+    return { ok: false, exitCode: 1, message: "invalid or missing --session value" };
+  }
+  const resolved = resolveSession({
+    flag: flagSession,
+    env: process.env.COPILOT_TMUX_SESSION,
+  });
+  if (!resolved.ok) {
+    return json
+      ? {
+          ok: false,
+          exitCode: 1,
+          output: { ok: false, error: resolved.error, candidates: resolved.candidates },
+        }
+      : { ok: false, exitCode: 1, message: resolved.error };
+  }
+  const session = resolved.session;
+  const sessionSource = resolved.source;
+
+  // Guard against a --session value that looks like a flag (e.g. --session --foo).
+  if (sessionSource === "flag" && session.startsWith("-")) {
+    return { ok: false, exitCode: 1, message: `invalid --session name: ${session}` };
+  }
+
+  const { commsStatus, commsSend, commsRecv, commsAsk } = await import("./comms/index.js");
+
+  if (command === "status") {
+    const r = await commsStatus(session);
+    return json
+      ? { ok: r.ok, output: { ...r, source: sessionSource } }
+      : {
+          ok: r.ok,
+          message: `session=${session} source=${sessionSource} on=${r.exists} online=${r.online} ready=${r.ready} busy=${r.busy}`,
+        };
+  }
+
+  if (command === "send") {
+    const text = flagValue(argv, "--text");
+    if (!text) {
+      return { ok: false, exitCode: 1, message: 'comms send requires --text "<prompt>"' };
+    }
+    const r = await commsSend(session, text, {}, { force: hasFlag(argv, "--force") });
+    return json
+      ? { ok: r.ok, exitCode: r.ok ? 0 : 1, output: r }
+      : {
+          ok: r.ok,
+          exitCode: r.ok ? 0 : 1,
+          message: r.ok ? `sent to ${session}` : `send failed: ${r.error}`,
+        };
+  }
+
+  if (command === "recv") {
+    let lines: number | undefined;
+    let timeoutMs: number | undefined;
+    try {
+      lines = parsePositiveIntFlag(flagValue(argv, "--lines"), "--lines");
+      timeoutMs = parsePositiveIntFlag(flagValue(argv, "--timeout"), "--timeout");
+    } catch (err) {
+      return { ok: false, exitCode: 1, message: String(err instanceof Error ? err.message : err) };
+    }
+    const r = await commsRecv(
+      session,
+      {},
+      { wait: hasFlag(argv, "--wait"), lines, timeoutMs },
+    );
+    if (json) {
+      return { ok: r.ok && !r.timedOut, exitCode: r.ok && !r.timedOut ? 0 : 1, output: r };
+    }
+    if (!r.ok) {
+      return { ok: false, exitCode: 1, message: `recv failed: ${r.error}` };
+    }
+    if (r.timedOut) {
+      return { ok: false, exitCode: 1, message: `recv timed out waiting for copilot\n${r.text ?? ""}` };
+    }
+    return { ok: true, exitCode: 0, message: r.text ?? "" };
+  }
+
+  if (command === "ask") {
+    const text = flagValue(argv, "--text");
+    if (!text) {
+      return { ok: false, exitCode: 1, message: 'comms ask requires --text "<prompt>"' };
+    }
+    let lines: number | undefined;
+    let timeoutMs: number | undefined;
+    try {
+      lines = parsePositiveIntFlag(flagValue(argv, "--lines"), "--lines");
+      timeoutMs = parsePositiveIntFlag(flagValue(argv, "--timeout"), "--timeout");
+    } catch (err) {
+      return { ok: false, exitCode: 1, message: String(err instanceof Error ? err.message : err) };
+    }
+    const r = await commsAsk(session, text, {}, { force: hasFlag(argv, "--force"), lines, timeoutMs });
+    if (json) {
+      return { ok: r.ok && !r.timedOut, exitCode: r.ok && !r.timedOut ? 0 : 1, output: r };
+    }
+    if (!r.ok) {
+      return { ok: false, exitCode: 1, message: `ask failed: ${r.error}` };
+    }
+    if (r.timedOut) {
+      return { ok: false, exitCode: 1, message: `ask timed out waiting for copilot\n${r.text ?? ""}` };
+    }
+    return { ok: true, exitCode: 0, message: r.text ?? "" };
+  }
+
+  return {
+    ok: false,
+    exitCode: 1,
+    message:
+      'Unknown comms subcommand. Try: comms status | send --text "<prompt>" | recv [--wait] | ask --text "<prompt>"',
+  };
 }
 
 const TEAM_SPEC_RE = /^(\d+):([\w-]+)$/;

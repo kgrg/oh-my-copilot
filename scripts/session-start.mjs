@@ -3,7 +3,7 @@ import { appendFileSync, mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { readStdin } from "./lib/stdin.mjs";
 import { checkForUpdate, formatUpdateNotice } from "./lib/version-check.mjs";
-import { readTodayGoal, recentEntryStats } from "./lib/daily-log.mjs";
+import { readTodayGoal, recentEntryStats, startSession } from "./lib/daily-log.mjs";
 
 const HOOK_NAME = "SessionStart";
 
@@ -46,6 +46,10 @@ function buildDailyLogBreadcrumb(directory) {
     if (update) parts.push(formatUpdateNotice(update.current, update.latest));
     const breadcrumb = buildDailyLogBreadcrumb(directory);
     if (breadcrumb) parts.push(breadcrumb);
+    // Resets the per-session baseline and flushes a nudge when the prior session
+    // did work but logged nothing. startSession never throws.
+    const flush = startSession(directory);
+    if (flush) parts.push(`[DAILY LOG] ${flush}`);
     const additionalContext = parts.join("\n\n---\n\n");
 
     console.log(

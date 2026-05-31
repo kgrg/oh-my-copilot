@@ -38,14 +38,16 @@ After a meaningful step — a decision made, a feature landed, a blocker hit —
 Good: "Chose breadcrumb+lazy-load over always-inject to keep start message small."
 Avoid: "Ran the build."
 
-### Nudge
-Every ~10 prompts the UserPromptSubmit hook injects:
+### Resume nudge (start of the next session)
+There is no per-turn nudge. Instead, if a session did real work but wrote nothing,
+the **next** SessionStart injects a one-line reminder:
 
 ```
-[DAILY LOG] You've made progress this session — consider daily_log_add ...
+[DAILY LOG] Your last session made progress but recorded nothing ...
 ```
 
-Treat it as a reminder to capture anything important since the last entry.
+Treat it as a prompt to capture what changed before moving on — or, better, summarize
+into the log *before ending* the session (below), so the nudge never needs to fire.
 
 ### Before wrapping up (the real end-of-session write)
 When the user signals they're done, **summarize the session into the log** with one or two

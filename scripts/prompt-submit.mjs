@@ -2,7 +2,7 @@
 import { appendFileSync, existsSync, mkdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { readStdin } from "./lib/stdin.mjs";
-import { bumpPromptCount } from "./lib/daily-log.mjs";
+import { recordPrompt } from "./lib/daily-log.mjs";
 
 const HOOK_NAME = "UserPromptSubmit";
 
@@ -34,17 +34,6 @@ function buildContinuationContext(directory) {
   return parts.join("\n\n---\n\n");
 }
 
-function buildDailyLogNudge(directory) {
-  try {
-    const { nudgeDue } = bumpPromptCount(directory);
-    return nudgeDue
-      ? "[DAILY LOG] You've made progress this session — consider daily_log_add to record what changed and any decisions, so the next session has context."
-      : "";
-  } catch {
-    return "";
-  }
-}
-
 function appendLog(directory, payload) {
   const logFile = join(directory, ".omp", "state", "hooks.log");
   try {
@@ -66,11 +55,16 @@ function appendLog(directory, payload) {
     const directory = data.directory ?? process.cwd();
     const prompt = data.prompt ?? data.message?.content ?? "";
     appendLog(directory, { sessionId, promptBytes: String(prompt).length });
+    // Count this prompt as session work (signals the SessionEnd nudge logic).
+    // Injects nothing — keeps per-turn token cost at zero.
+    try {
+      recordPrompt(directory);
+    } catch {
+      // best effort: counting must never block the prompt
+    }
     const parts = [];
     const cont = buildContinuationContext(directory);
     if (cont) parts.push(cont);
-    const nudge = buildDailyLogNudge(directory);
-    if (nudge) parts.push(nudge);
     const additionalContext = parts.join("\n\n---\n\n");
     const output = additionalContext
       ? { continue: true, hookSpecificOutput: { hookEventName: HOOK_NAME, additionalContext } }

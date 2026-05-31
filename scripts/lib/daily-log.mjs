@@ -2,7 +2,11 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, writeFile
 import { dirname, join, resolve } from "node:path";
 
 const DAY_FILE_RE = /^\d{4}-\d{2}-\d{2}\.md$/;
-export const NUDGE_INTERVAL = 10;
+const DEFAULT_NUDGE =
+  "Your last session made progress but recorded nothing in the daily log — call daily_log_add to capture what changed and any key decisions, so this session has that context.";
+
+// A session with at least this many user prompts counts as "did real work".
+const WORK_THRESHOLD = 3;
 
 function pad(n) {
   return String(n).padStart(2, "0");
@@ -59,29 +63,23 @@ function statePath(directory) {
   return join(resolve(directory), ".omp", "state", "daily-log.json");
 }
 
-/**
- * Increment today's prompt counter (resetting across a day boundary) and report
- * whether a nudge is due (every NUDGE_INTERVAL prompts). Best-effort, never throws.
- */
-export function bumpPromptCount(directory) {
-  const today = todayStr();
-  const p = statePath(directory);
-  let state = { date: today, promptCount: 0, lastNudgeAt: 0 };
+function readState(directory) {
+  const fresh = { date: todayStr(), prompts: 0, entriesAtStart: 0, pendingNudge: false, pendingReason: "" };
   try {
-    if (existsSync(p)) {
-      const parsed = JSON.parse(readFileSync(p, "utf8"));
-      // Guard against valid-but-wrong JSON (null, number, array) so state.date
-      // below can't throw — keeps the "never throws" contract honest.
-      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) state = parsed;
-    }
+    const p = statePath(directory);
+    if (!existsSync(p)) return fresh;
+    const parsed = JSON.parse(readFileSync(p, "utf8"));
+    // Ignore valid-but-wrong JSON (null, number, array) so callers can't throw.
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) return { ...fresh, ...parsed };
   } catch {
-    // start fresh on parse failure
+    // start fresh on read/parse failure
   }
-  if (state.date !== today) state = { date: today, promptCount: 0, lastNudgeAt: 0 };
-  state.promptCount = (state.promptCount || 0) + 1;
-  const nudgeDue = state.promptCount - (state.lastNudgeAt || 0) >= NUDGE_INTERVAL;
-  if (nudgeDue) state.lastNudgeAt = state.promptCount;
+  return fresh;
+}
+
+function writeState(directory, state) {
   try {
+    const p = statePath(directory);
     mkdirSync(dirname(p), { recursive: true });
     const tmp = `${p}.tmp.${process.pid}.${Date.now()}`;
     writeFileSync(tmp, JSON.stringify(state, null, 2), "utf8");
@@ -89,5 +87,52 @@ export function bumpPromptCount(directory) {
   } catch {
     // best effort
   }
-  return { state, nudgeDue };
+}
+
+/**
+ * Called at SessionStart ("a new session continuing from an existing one").
+ * Returns a one-line flush nudge when the PRIOR session did work but logged
+ * nothing (else ""), then resets the per-session baseline. Never throws.
+ */
+export function startSession(directory) {
+  const prior = readState(directory);
+  const flush = prior.pendingNudge ? prior.pendingReason || DEFAULT_NUDGE : "";
+  writeState(directory, {
+    date: todayStr(),
+    prompts: 0,
+    entriesAtStart: recentEntryStats(directory, 0).entries,
+    pendingNudge: false,
+    pendingReason: "",
+  });
+  return flush;
+}
+
+/**
+ * Called at UserPromptSubmit. Increments the per-session work counter.
+ * Deliberately does NOT reset on day rollover — startSession owns the baseline,
+ * so a session that spans midnight still counts all its prompts as one session.
+ */
+export function recordPrompt(directory) {
+  const state = readState(directory);
+  state.prompts = (state.prompts || 0) + 1;
+  writeState(directory, state);
+}
+
+/**
+ * Called at SessionEnd. Arms a nudge for the NEXT SessionStart when this session
+ * did real work (>= WORK_THRESHOLD prompts) but added no daily-log entries.
+ * Never throws.
+ */
+export function endSession(directory) {
+  const state = readState(directory);
+  const sameDay = state.date === todayStr();
+  const added = recentEntryStats(directory, 0).entries - (state.entriesAtStart || 0);
+  const didWork = (state.prompts || 0) >= WORK_THRESHOLD;
+  // Only arm when the session started and ended on the same calendar day. Across
+  // a midnight boundary the entriesAtStart baseline refers to a different
+  // day-file, so the delta is unreliable — stay quiet rather than risk a
+  // spurious nudge.
+  state.pendingNudge = sameDay && didWork && added <= 0;
+  state.pendingReason = state.pendingNudge ? DEFAULT_NUDGE : "";
+  writeState(directory, state);
 }

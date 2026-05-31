@@ -2,6 +2,7 @@
 import { appendFileSync, mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { readStdin } from "./lib/stdin.mjs";
+import { endSession } from "./lib/daily-log.mjs";
 
 const HOOK_NAME = "SessionEnd";
 
@@ -21,6 +22,9 @@ const HOOK_NAME = "SessionEnd";
     } catch {
       // best effort
     }
+    // Arm a daily-log nudge for the next session if this one did work but
+    // logged nothing. endSession never throws.
+    endSession(directory);
     console.log(JSON.stringify({ continue: true }));
   } catch (err) {
     console.error(`[hook ${HOOK_NAME}] failed: ${err?.message ?? err}`);

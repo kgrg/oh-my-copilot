@@ -82,6 +82,7 @@ That's it.
 ### Developer Experience
 
 - **MCP server** ships with `notepad`, `project-memory`, `shared-memory`, `state`, and `trace` tools out of the box
+- **Lightweight Copilot context** — managed instructions keep only the repo goal plus on-demand memory commands; set `OMP_DISABLE_INSTRUCTIONS_MEMORY=1` to skip writing the managed block entirely
 - **File-state coordination** — outbox JSONL + byte cursor, atomic `O_EXCL` task locks, optimistic CAS on claim
 - **Idle nudge** — content-based pane idle detection that pokes stuck workers
 - **Mode-state loops** — single source of truth per loop (Ralph/Ultrawork/UltraQA state files)

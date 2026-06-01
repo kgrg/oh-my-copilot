@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { mkdtempSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { afterEach, describe, expect, it } from "vitest";
+import { existsSync, mkdtempSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { syncInstructionsMemory } from "../src/instructions-memory.js";
@@ -10,15 +10,25 @@ const cwd = () => mkdtempSync(path.join(tmpdir(), "omc-instr-"));
 const instr = (root: string) => readFileSync(path.join(root, ".github", "copilot-instructions.md"), "utf8");
 
 describe("instructions memory block", () => {
-  it("renders goal + directives into copilot-instructions.md", () => {
+  afterEach(() => {
+    delete process.env.OMP_DISABLE_INSTRUCTIONS_MEMORY;
+  });
+
+  it("renders a lightweight on-demand project context block", () => {
     const root = cwd();
     writeRepoGoal(root, "Ship it");
     addDirective(root, "always run tests");
     expect(syncInstructionsMemory(root).wrote).toBe(true);
     const text = instr(root);
     expect(text).toContain("omp:memory:start");
+    expect(text).toContain("## oh-my-copilot project context");
     expect(text).toContain("**Repo goal:** Ship it");
-    expect(text).toContain("- always run tests");
+    expect(text).toContain("Project memory is available on demand:");
+    expect(text).toContain("`omp project-memory read`");
+    expect(text).toContain("`omp project-memory read <id>`");
+    expect(text).toContain("`omp daily-log read`");
+    expect(text).not.toContain("always run tests");
+    expect(text).not.toContain("must follow");
     expect(text).toContain("omp:memory:end");
   });
 
@@ -56,5 +66,16 @@ describe("instructions memory block", () => {
     const text = instr(root);
     expect(text).toContain("Do good work.");
     expect(text).toContain("**Repo goal:** Ship");
+  });
+
+  it("skips writing the managed block when instructions memory is disabled", () => {
+    const root = cwd();
+    process.env.OMP_DISABLE_INSTRUCTIONS_MEMORY = "1";
+    writeRepoGoal(root, "Ship");
+
+    const result = syncInstructionsMemory(root);
+
+    expect(result.wrote).toBe(false);
+    expect(existsSync(path.join(root, ".github", "copilot-instructions.md"))).toBe(false);
   });
 });

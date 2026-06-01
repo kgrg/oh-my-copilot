@@ -22,6 +22,7 @@ const ROLE_BIN: Record<string, string> = {
   claude: "claude",
   codex: "codex",
   gemini: "gemini",
+  copilot: "copilot --allow-all-tools",
 };
 
 export function resolveWorkerBin(role: WorkerRole): string {

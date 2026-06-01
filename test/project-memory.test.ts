@@ -2,25 +2,44 @@ import { describe, expect, it } from "vitest";
 import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { addProjectDirective, addProjectNote, readProjectMemory } from "../src/project-memory.js";
+import { addDirective, addNote, noteIndex, readDirectives, readNote } from "../src/project-memory.js";
 
 const cwd = () => mkdtempSync(path.join(tmpdir(), "omc-pm-"));
 
-describe("project memory (src/project-memory)", () => {
-  it("starts empty", () => {
-    const m = readProjectMemory(cwd());
-    expect(m.notes).toEqual([]);
-    expect(m.directives).toEqual([]);
+describe("project memory: directives (injected)", () => {
+  it("starts empty and appends", () => {
+    const root = cwd();
+    expect(readDirectives(root)).toEqual([]);
+    expect(addDirective(root, "always run tests")).toBe(1);
+    expect(addDirective(root, "never push to main")).toBe(2);
+    expect(readDirectives(root)).toEqual(["always run tests", "never push to main"]);
+  });
+});
+
+describe("project memory: notes (progressive disclosure)", () => {
+  it("adds a note and surfaces only id+title in the index", () => {
+    const root = cwd();
+    const id = addNote(root, "Auth lives in src/auth", "AuthService.verify() checks the JWT; see middleware.ts");
+    expect(id).toBe("auth-lives-in-src-auth");
+    const idx = noteIndex(root);
+    expect(idx).toEqual([{ id: "auth-lives-in-src-auth", title: "Auth lives in src/auth" }]);
+    // index entry has NO body — that only comes from readNote
+    expect(JSON.stringify(idx)).not.toContain("AuthService");
   });
 
-  it("appends notes and directives, tracking counts", () => {
+  it("loads a note body on demand by id", () => {
     const root = cwd();
-    expect(addProjectNote(root, "first note")).toBe(1);
-    expect(addProjectNote(root, "second note")).toBe(2);
-    expect(addProjectDirective(root, "always test")).toBe(1);
-    const m = readProjectMemory(root);
-    expect(m.notes).toEqual(["first note", "second note"]);
-    expect(m.directives).toEqual(["always test"]);
-    expect(m.updatedAt).toBeTruthy();
+    const id = addNote(root, "DB schema", "users(id, email); sessions(id, user_id)");
+    const note = readNote(root, id);
+    expect(note).toContain("# DB schema");
+    expect(note).toContain("users(id, email)");
+    expect(readNote(root, "missing")).toBeNull();
+  });
+
+  it("dedupes ids when titles collide", () => {
+    const root = cwd();
+    expect(addNote(root, "Note")).toBe("note");
+    expect(addNote(root, "Note")).toBe("note-2");
+    expect(noteIndex(root).map((n) => n.id)).toEqual(["note", "note-2"]);
   });
 });

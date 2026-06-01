@@ -47,10 +47,24 @@ function buildDailyLogBreadcrumb(directory) {
     const update = await checkForUpdate({ stateDir });
     if (update) parts.push(formatUpdateNotice(update.current, update.latest));
     // Directives are must-follow rules — injected unconditionally (never on-demand)
-    // so the agent can't skip a rule by judging it "unrelated".
+    // so the agent can't skip a rule by judging it "unrelated". Capped by count +
+    // chars so a bloated directive list can't balloon the start message; overflow
+    // is summarized with a pointer (mirrors OpenClaw's injection budget).
     const directives = readDirectives(directory);
     if (directives.length > 0) {
-      parts.push(`[DIRECTIVES] Follow these this session:\n${directives.map((d) => `- ${d}`).join("\n")}`);
+      const MAX_DIRECTIVES = 12;
+      const MAX_DIRECTIVE_CHARS = 1200;
+      const shown = [];
+      let chars = 0;
+      for (const d of directives) {
+        if (shown.length >= MAX_DIRECTIVES || chars + d.length > MAX_DIRECTIVE_CHARS) break;
+        shown.push(d);
+        chars += d.length;
+      }
+      const more = directives.length - shown.length;
+      const body = shown.map((d) => `- ${d}`).join("\n");
+      const tail = more > 0 ? `\n- (+${more} more — run \`omp project-memory read\` to see all)` : "";
+      parts.push(`[DIRECTIVES] Follow these this session:\n${body}${tail}`);
     }
     const repoGoal = readRepoGoal(directory);
     if (repoGoal) parts.push(`[REPO GOAL] ${repoGoal}`);

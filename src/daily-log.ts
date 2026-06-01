@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, unlinkSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { ompRoot } from "./omp-root.js";
 
@@ -99,6 +99,31 @@ export function addLogEntry(cwd: string, text: string): { date: string; count: n
   doc.log.push(`- ${timeStr()} — ${clean}`);
   writeDay(cwd, doc);
   return { date: todayStr(), count: doc.log.length };
+}
+
+/**
+ * Delete day-files older than `keepDays` days; returns the removed dates.
+ * Daily files already age out of context (only a breadcrumb is injected and
+ * reads are recency-bounded), so this is disk housekeeping, not a context fix.
+ */
+export function pruneDailyLog(cwd: string, keepDays: number): string[] {
+  const dir = dailyDir(cwd);
+  if (!existsSync(dir)) return [];
+  const cutoff = todayStr(new Date(Date.now() - Math.max(0, keepDays) * 86400000));
+  const removed: string[] = [];
+  for (const f of readdirSync(dir)) {
+    if (!DAY_FILE_RE.test(f)) continue;
+    const date = f.slice(0, 10);
+    if (date < cutoff) {
+      try {
+        unlinkSync(join(dir, f));
+        removed.push(date);
+      } catch {
+        // skip unremovable file
+      }
+    }
+  }
+  return removed.sort();
 }
 
 /** Read today + the previous `days` days, newest-first, capped to ~4KB. */

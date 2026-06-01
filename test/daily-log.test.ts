@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { mkdtempSync, readdirSync, readFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { addLogEntry, readDailyLog, setDailyGoal } from "../src/daily-log.js";
+import { addLogEntry, pruneDailyLog, readDailyLog, setDailyGoal } from "../src/daily-log.js";
 
 const cwd = () => mkdtempSync(path.join(tmpdir(), "omc-dl-"));
 const todayFile = (root: string) => {
@@ -40,5 +40,16 @@ describe("daily log (src/daily-log)", () => {
     const root = cwd();
     addLogEntry(root, "today entry");
     expect(readDailyLog(root, 1)).toContain("today entry");
+  });
+
+  it("prunes day-files older than the keep window, keeping today", () => {
+    const root = cwd();
+    const dir = path.join(root, ".omp", "memory", "daily");
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(path.join(dir, "2000-01-01.md"), "# 2000-01-01\n");
+    writeFileSync(path.join(dir, "2000-06-15.md"), "# 2000-06-15\n");
+    addLogEntry(root, "today entry"); // creates today's file
+    expect(pruneDailyLog(root, 30)).toEqual(["2000-01-01", "2000-06-15"]);
+    expect(readDailyLog(root, 1)).toContain("today entry"); // today survives
   });
 });

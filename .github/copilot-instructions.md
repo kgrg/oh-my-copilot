@@ -52,5 +52,7 @@ memory aids, not a transcript. Float kills their value.
   lasting rules and keep them few. `omp project-memory add-note "<title>" [--body "<text>"]`
   for durable facts; list them with `omp project-memory index` and load one with
   `omp project-memory read <id>` — bodies stay on disk until asked, so notes never bloat context.
-- **Caps:** at most a handful of entries per day; record decisions and outcomes, not narration.
-  Skip trivial or very short sessions entirely. Do NOT log per skill invocation.
+- **Caps & retention:** keep directives to a handful (only the first ~12 are injected at start);
+  a few daily entries per day — decisions and outcomes, not narration; skip trivial sessions;
+  never log per skill invocation. Trim old day-files with `omp daily-log prune [--keep-days <n>]`
+  (default 30).

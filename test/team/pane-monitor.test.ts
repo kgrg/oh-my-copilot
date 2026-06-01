@@ -6,12 +6,16 @@ import {
 } from "../../src/team/pane-monitor.js";
 import type { TmuxApi, TmuxResult } from "../../src/team/tmux.js";
 
-function mockTmux(capturedByPane: Record<string, string>, deadPanes: Set<string> = new Set()): TmuxApi & { displayMessage: ReturnType<typeof vi.fn> } {
+function mockTmux(
+  capturedByPane: Record<string, string>,
+  deadPanes: Set<string> = new Set(),
+): TmuxApi & { displayMessage: ReturnType<typeof vi.fn>; sendText: ReturnType<typeof vi.fn> } {
+  const sendText = vi.fn((target: string, text: string) => ({ stdout: "", stderr: "", status: 0 } satisfies TmuxResult));
   return {
     newSession: () => ({ stdout: "", stderr: "", status: 0 } satisfies TmuxResult),
     splitWindow: () => ({ stdout: "", stderr: "", status: 0 } satisfies TmuxResult),
     sendKeys: () => ({ stdout: "", stderr: "", status: 0 } satisfies TmuxResult),
-    sendText: () => ({ stdout: "", stderr: "", status: 0 } satisfies TmuxResult),
+    sendText,
     displayMessage: vi.fn(() => ({ stdout: "", stderr: "", status: 0 } satisfies TmuxResult)),
     capturePane: (target: string) =>
       ({ stdout: capturedByPane[target] ?? "", stderr: "", status: 0 } satisfies TmuxResult),
@@ -80,6 +84,6 @@ describe("monitorPanes", () => {
 
     expect(result.ok).toBe(true);
     expect(result.events).toHaveLength(1);
-    expect(tmux.displayMessage).toHaveBeenCalledWith("%1", expect.stringContaining("ready for review"));
+    expect(tmux.sendText).toHaveBeenCalledWith("%1", expect.stringContaining("ready for review"));
   });
 });

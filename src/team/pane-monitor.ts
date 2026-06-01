@@ -1,4 +1,4 @@
-import { makeTmux, paneHasActiveTask, paneLooksReady, type TmuxApi } from "./tmux.js";
+import { makeTmux, paneHasActiveTask, paneLooksReady, sendToWorker, type TmuxApi } from "./tmux.js";
 
 export interface PaneMonitorConfig {
   pollIntervalMs: number;
@@ -165,7 +165,11 @@ export async function monitorPanes(opts: MonitorPanesOptions): Promise<PaneMonit
       states.set(paneId, result.state);
       if (result.event) {
         events.push(result.event);
-        tmux.displayMessage(opts.leaderPaneId, result.event.message);
+        try {
+          await sendToWorker(tmux, opts.leaderPaneId, result.event.message, { rounds: 4, delayMs: 100 });
+        } catch {
+          tmux.displayMessage(opts.leaderPaneId, result.event.message);
+        }
         remaining--;
       }
     }

@@ -93,6 +93,13 @@ export function addScheduleJob(stateCwd: string, opts: ScheduleAddOptions): AddR
     return { ok: true, job, messages };
   }
 
+  // Clean replace: if a job with this id already exists, uninstall its OS entry by
+  // the RECORDED backend first. The new install's detected backend may differ (e.g.
+  // a prior crontab-fallback re-added with a simple cron resolves to launchd), which
+  // would otherwise orphan the old entry.
+  const existing = readJob(jobFilePath(paths.jobsDir, job.id));
+  if (existing) uninstallJob(existing.id, existing.backend);
+
   writeJob(jobFilePath(paths.jobsDir, job.id), job);
   const result = installJob(job, paths.logsDir, paths.cwd);
   job.backend = result.backend;

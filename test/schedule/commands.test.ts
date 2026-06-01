@@ -83,6 +83,15 @@ describe("addScheduleJob", () => {
     expect(listScheduleJobs(root).filter((j) => j.id === "pr")).toHaveLength(1);
     expect(readJob(jobFilePath(resolveSchedulePaths(root).jobsDir, "pr"))?.prompt).toBe("second");
   });
+
+  it("re-add uninstalls the PRIOR recorded backend (no orphan on backend change)", () => {
+    vi.mocked(installJob).mockReturnValueOnce({ backend: "launchd", installed: true });
+    addScheduleJob(root, { id: "pr", cron: "0 9 * * *", prompt: "first" }); // recorded backend: launchd
+    vi.mocked(uninstallJob).mockClear();
+    addScheduleJob(root, { id: "pr", cron: "0 9,12 * * 1-5", prompt: "second" }); // would detect crontab
+    // the re-add must uninstall the OLD entry by its recorded backend (launchd), not just crontab
+    expect(uninstallJob).toHaveBeenCalledWith("pr", "launchd");
+  });
 });
 
 describe("resolveOmpBinPath", () => {

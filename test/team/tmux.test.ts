@@ -13,6 +13,19 @@ describe("pane content classification", () => {
     expect(paneLooksReady("")).toBe(false);
   });
 
+  it("paneLooksReady skips Copilot CLI status bar below prompt", () => {
+    const copilotOutput = [
+      "● Lane A reporting: all good!",
+      "───────────────────────────────────────",
+      "❯",
+      "───────────────────────────────────────",
+      " / commands · ? help                                 Claude Opus 4.6",
+      "",
+      "",
+    ].join("\n");
+    expect(paneLooksReady(copilotOutput)).toBe(true);
+  });
+
   it("paneHasActiveTask detects active-task markers", () => {
     expect(paneHasActiveTask("Esc to interrupt")).toBe(true);
     expect(paneHasActiveTask("background terminal running")).toBe(true);

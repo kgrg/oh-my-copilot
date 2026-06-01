@@ -25,12 +25,17 @@ const ACTIVE_HINTS = [
   /tool call in progress/i,
 ];
 
+// Lines the Copilot CLI renders below the actual prompt — skip these when
+// scanning backwards for the real prompt character.
+const STATUS_BAR_RE = /^\s*[\/ ]?\s*commands\b|^\s*[─━═]{3,}/;
+
 export function paneLooksReady(captured: string): boolean {
   if (!captured.trim()) return false;
   const lines = captured.split("\n");
   for (let i = lines.length - 1; i >= 0; i--) {
     const line = lines[i]!;
     if (line.trim().length === 0) continue;
+    if (STATUS_BAR_RE.test(line)) continue;
     return PROMPT_RE.test(line);
   }
   return false;

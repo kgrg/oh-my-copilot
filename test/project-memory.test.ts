@@ -36,6 +36,14 @@ describe("project memory: notes (progressive disclosure)", () => {
     expect(readNote(root, "missing")).toBeNull();
   });
 
+  it("rejects a path-traversal id on read", () => {
+    const root = cwd();
+    addNote(root, "Safe note");
+    expect(readNote(root, "../../../etc/passwd")).toBeNull();
+    expect(readNote(root, "safe/note")).toBeNull();
+    expect(readNote(root, "safe-note")).toContain("# Safe note"); // the real one still loads
+  });
+
   it("dedupes ids when titles collide", () => {
     const root = cwd();
     expect(addNote(root, "Note")).toBe("note");

@@ -46,19 +46,25 @@ export function syncInstructionsMemory(cwd: string): { path: string; wrote: bool
   const p = instructionsPath(cwd);
   const block = renderBlock(cwd);
   try {
-    let content = existsSync(p) ? readFileSync(p, "utf8") : "";
-    const s = content.indexOf(START);
-    const e = content.indexOf(END);
-    if (s !== -1 && e !== -1 && e > s) {
-      content = content.slice(0, s) + block + content.slice(e + END.length);
-    } else if (content.trim() === "") {
-      content = `# oh-my-copilot\n\n${block}\n`;
+    const content = existsSync(p) ? readFileSync(p, "utf8") : "";
+    const starts = content.split(START).length - 1;
+    const ends = content.split(END).length - 1;
+    let next: string;
+    if (starts === 1 && ends === 1) {
+      const s = content.indexOf(START);
+      const e = content.indexOf(END);
+      if (e <= s) return { path: p, wrote: false }; // markers out of order — don't risk a clobber
+      next = content.slice(0, s) + block + content.slice(e + END.length);
+    } else if (starts === 0 && ends === 0) {
+      next = content.trim() === "" ? `# oh-my-copilot\n\n${block}\n` : `${content.trimEnd()}\n\n${block}\n`;
     } else {
-      content = `${content.trimEnd()}\n\n${block}\n`;
+      // Orphan or duplicate markers = corrupt managed region. Fail closed rather
+      // than risk replacing user content between mismatched markers.
+      return { path: p, wrote: false };
     }
     mkdirSync(dirname(p), { recursive: true });
     const tmp = `${p}.tmp.${process.pid}.${Date.now()}`;
-    writeFileSync(tmp, content, "utf8");
+    writeFileSync(tmp, next, "utf8");
     renameSync(tmp, p);
     return { path: p, wrote: true };
   } catch {

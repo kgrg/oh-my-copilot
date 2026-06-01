@@ -116,6 +116,9 @@ export function noteIndex(cwd: string): NoteMeta[] {
 
 /** Full note body by id, or null when missing. */
 export function readNote(cwd: string, id: string): string | null {
+  // Ids are slugs ([a-z0-9-]); reject anything else so a crafted id can't
+  // escape the notes dir via path traversal (e.g. "../../README").
+  if (!/^[a-z0-9-]+$/i.test(id)) return null;
   const p = join(notesDir(cwd), `${id}.md`);
   if (!existsSync(p)) return null;
   try {

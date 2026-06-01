@@ -259,9 +259,15 @@ export async function runCli(argv = process.argv.slice(2)): Promise<CliResult> {
     const { syncInstructionsMemory } = await import("./instructions-memory.js");
     const cwd = flagValue(argv, "--root") ?? process.cwd();
     if (command === "add-note") {
-      // Accept either a positional title or a --title flag (the model often
-      // mirrors --body and writes --title); reject a stray flag as the title.
-      const title = flagValue(argv, "--title") ?? (value && !value.startsWith("-") ? value : undefined);
+      // Accept a --title flag or a positional title; reject a flag-like value in
+      // either slot, so `add-note --title --body x` doesn't store "--body".
+      const titleFlag = flagValue(argv, "--title");
+      const title =
+        titleFlag && !titleFlag.startsWith("-")
+          ? titleFlag
+          : value && !value.startsWith("-")
+            ? value
+            : undefined;
       if (!title || !title.trim()) {
         return { ok: false, exitCode: 1, message: 'usage: omp project-memory add-note "<title>" [--body "<text>"]' };
       }
@@ -270,7 +276,13 @@ export async function runCli(argv = process.argv.slice(2)): Promise<CliResult> {
       return json ? { ok: true, output: { ok: true, id } } : { ok: true, message: `note added: ${id}` };
     }
     if (command === "add-directive") {
-      const directive = flagValue(argv, "--directive") ?? (value && !value.startsWith("-") ? value : undefined);
+      const directiveFlag = flagValue(argv, "--directive");
+      const directive =
+        directiveFlag && !directiveFlag.startsWith("-")
+          ? directiveFlag
+          : value && !value.startsWith("-")
+            ? value
+            : undefined;
       if (!directive || !directive.trim()) {
         return { ok: false, exitCode: 1, message: 'usage: omp project-memory add-directive "<rule>"' };
       }

@@ -34,6 +34,19 @@ describe("instructions memory block", () => {
     expect(text.match(/omp:memory:start/g)?.length).toBe(1);
   });
 
+  it("fails closed (never clobbers) when a marker is orphaned", () => {
+    const root = cwd();
+    mkdirSync(path.join(root, ".github"), { recursive: true });
+    // orphan START (no END) wrapping user content
+    writeFileSync(
+      path.join(root, ".github", "copilot-instructions.md"),
+      "# Mine\n<!-- omp:memory:start -->\nimportant user notes\n",
+    );
+    writeRepoGoal(root, "Ship");
+    expect(syncInstructionsMemory(root).wrote).toBe(false);
+    expect(instr(root)).toContain("important user notes"); // untouched
+  });
+
   it("preserves instructions content outside the managed block", () => {
     const root = cwd();
     mkdirSync(path.join(root, ".github"), { recursive: true });

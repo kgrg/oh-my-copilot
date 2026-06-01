@@ -111,11 +111,16 @@ const FALLBACK: WorkflowSuggestion = {
 };
 
 function matchingSignals(task: string, rule: SuggestRule): string[] {
+  const searchableTask = task.toLowerCase();
   const matches: string[] = [];
   for (let i = 0; i < rule.patterns.length; i++) {
-    if (rule.patterns[i]!.test(task)) matches.push(rule.signals[i] ?? rule.id);
+    if (rule.patterns[i]!.test(searchableTask)) matches.push(rule.signals[i] ?? rule.id);
   }
   return [...new Set(matches)];
+}
+
+function taskArgument(argv: string[]): string {
+  return argv.slice(1).find((arg) => !arg.startsWith("--")) ?? "";
 }
 
 export function suggestWorkflow(task: string): WorkflowSuggestion | { ok: false; error: string } {
@@ -167,7 +172,7 @@ export const suggestCommand: CommandModule = {
   name: "suggest",
   summary: 'recommend a slash-skill workflow for a task: suggest "<task>" [--json]',
   run(argv: string[], context: CliContext): CliResult {
-    const task = argv[1] && !argv[1].startsWith("--") ? argv[1] : "";
+    const task = taskArgument(argv);
     const suggestion = suggestWorkflow(task);
     if (!suggestion.ok) {
       return {

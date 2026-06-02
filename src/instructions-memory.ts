@@ -2,17 +2,16 @@ import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "
 import { dirname, join } from "node:path";
 import { ompRoot } from "./omp-root.js";
 import { readRepoGoal } from "./goal.js";
-import { readDirectives, noteIndex } from "./project-memory.js";
+import { noteIndex } from "./project-memory.js";
 
 // Copilot CLI does not execute plugin lifecycle hooks (verified: neither
 // SessionStart nor UserPromptSubmit fire), so we can't inject memory via hooks.
-// Copilot DOES read .github/copilot-instructions.md, so we render the always-on
-// memory (repo goal + directives) into a managed block there. The block is
-// refreshed whenever goal/directives/notes change, so it appears every session.
+// Copilot DOES read .github/copilot-instructions.md, so we render a lightweight
+// pointer block there. The block keeps repo goal visible but leaves project
+// memory and daily logs on demand to avoid bloating or over-steering context.
 
 const START = "<!-- omp:memory:start -->";
 const END = "<!-- omp:memory:end -->";
-const MAX_DIRECTIVES = 20;
 
 function instructionsPath(cwd: string): string {
   return join(ompRoot(cwd), ".github", "copilot-instructions.md");
@@ -20,18 +19,17 @@ function instructionsPath(cwd: string): string {
 
 function renderBlock(cwd: string): string {
   const goal = readRepoGoal(cwd);
-  const directives = readDirectives(cwd);
   const notes = noteIndex(cwd);
-  const lines: string[] = [START, "## Active memory (managed by omp — do not edit between these markers)"];
+  const lines: string[] = [START, "## oh-my-copilot project context"];
   if (goal) lines.push("", `**Repo goal:** ${goal}`);
-  if (directives.length > 0) {
-    lines.push("", "**Directives — must follow this session:**");
-    for (const d of directives.slice(0, MAX_DIRECTIVES)) lines.push(`- ${d}`);
-    if (directives.length > MAX_DIRECTIVES) lines.push(`- (+${directives.length - MAX_DIRECTIVES} more — \`omp project-memory read\`)`);
-  }
   lines.push(
     "",
-    `**On demand:** \`omp project-memory index\` (${notes.length} note${notes.length === 1 ? "" : "s"}) · \`omp project-memory read <id>\` · \`omp daily-log read\``,
+    "Project memory is available on demand:",
+    "- `omp project-memory read` for project hints and the note index",
+    "- `omp project-memory read <id>` for a specific note body",
+    "- `omp daily-log read` for recent daily context",
+    "",
+    `Available note index: ${notes.length} note${notes.length === 1 ? "" : "s"}.`,
     END,
   );
   return lines.join("\n");
@@ -44,6 +42,7 @@ function renderBlock(cwd: string): string {
  */
 export function syncInstructionsMemory(cwd: string): { path: string; wrote: boolean } {
   const p = instructionsPath(cwd);
+  if (process.env.OMP_DISABLE_INSTRUCTIONS_MEMORY) return { path: p, wrote: false };
   const block = renderBlock(cwd);
   try {
     const content = existsSync(p) ? readFileSync(p, "utf8") : "";

@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, it, expect } from "vitest";
 import { existsSync, mkdtempSync, readFileSync, rmSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { runEnvInit, type InitIO } from "../../src/env/init.js";
+import { runEnvInit, SLACK_APP_MANIFEST_YAML, type InitIO } from "../../src/env/init.js";
 import { OMP_ENV_DIRNAME, OMP_ENV_FILENAME } from "../../src/env/dotenv.js";
 
 function makeScripted(answers: (string | undefined)[]): { io: InitIO; output: string[]; remaining: () => number } {
@@ -207,6 +207,28 @@ describe("runEnvInit (interactive / scripted IO)", () => {
     // Next-steps printed
     expect(printed).toMatch(/gateway status/);
     expect(printed).toMatch(/gateway serve/);
+  });
+
+  it("prints the Slack app manifest YAML so the user can paste it (with required scopes)", async () => {
+    const { io, output } = makeScripted(["xoxb-bot", "xapp-app", "", ""]);
+    await runEnvInit({ io, homeDir: home });
+    const printed = output.join("\n");
+    // Steers the user away from 'From scratch' (which is what triggers Slack's
+    // 'add at least one feature or permission scope' error).
+    expect(printed).toMatch(/From an app manifest/);
+    expect(printed).not.toMatch(/From scratch.*recommended/i);
+    // Manifest body present verbatim so users can copy-paste into the dialog.
+    for (const line of SLACK_APP_MANIFEST_YAML.trimEnd().split("\n")) {
+      expect(printed).toContain(line);
+    }
+    // The required bot scopes are in the manifest — explicit asserts so a
+    // future edit that drops one fails this test loudly.
+    expect(printed).toMatch(/app_mentions:read/);
+    expect(printed).toMatch(/chat:write/);
+    expect(printed).toMatch(/im:history/);
+    expect(printed).toMatch(/im:read/);
+    expect(printed).toMatch(/im:write/);
+    expect(printed).toMatch(/socket_mode_enabled: true/);
   });
 
   it("re-prompts when the user mistypes the bot-token prefix", async () => {

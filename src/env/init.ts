@@ -62,6 +62,42 @@ const APP_TOKEN_PREFIX = "xapp-";
 
 const SLACK_APP_URL = "https://api.slack.com/apps";
 
+/**
+ * Slack app manifest pre-configured for the omp gateway bridge. Includes the
+ * bot scopes Slack requires before letting you install the app, plus event
+ * subscriptions for DMs and @mentions, plus Socket Mode (no public URL).
+ *
+ * Keep this in sync with docs/slack-setup.md. If you change one, change both.
+ */
+export const SLACK_APP_MANIFEST_YAML = `display_information:
+  name: omp-copilot
+  description: Bridge to a local GitHub Copilot CLI session
+features:
+  bot_user:
+    display_name: omp-copilot
+    always_online: true
+  app_home:
+    messages_tab_enabled: true
+    messages_tab_read_only_enabled: false
+oauth_config:
+  scopes:
+    bot:
+      - app_mentions:read
+      - chat:write
+      - im:history
+      - im:read
+      - im:write
+settings:
+  event_subscriptions:
+    bot_events:
+      - app_mention
+      - message.im
+  interactivity:
+    is_enabled: false
+  org_deploy_enabled: false
+  socket_mode_enabled: true
+`;
+
 const INTRO_LINES = [
   "",
   "omp env init — set up ~/.omp/.env",
@@ -70,15 +106,28 @@ const INTRO_LINES = [
   "`omp gateway serve` works from any shell, without `source .env`.",
   "Shell exports always win, so a one-off override still works.",
   "",
-  "Where to get the tokens (≈3 min):",
-  `  1. Open ${SLACK_APP_URL} → "Create New App" → "From an app manifest"`,
-  "     and paste the YAML from docs/slack-setup.md.",
-  `  2. Bot token (xoxb-…): "OAuth & Permissions" → "Bot User OAuth Token"`,
-  "     after installing the app to your workspace.",
-  `  3. App-level token (xapp-…): "Basic Information" → "App-Level Tokens"`,
-  "     → Generate, with scope `connections:write`.",
+  "──────────────────────────────────────────────────────────────────────",
+  "STEP 1 — create the Slack app FROM AN APP MANIFEST (not from scratch).",
+  "──────────────────────────────────────────────────────────────────────",
+  `  • Open ${SLACK_APP_URL} → "Create New App" → "From an app manifest".`,
+  "  • Pick your workspace.",
+  `  • Choose YAML and paste the manifest below, then "Create" → "Install to Workspace".`,
+  "    (The manifest includes the required scopes so Slack will let you install it.",
+  "     Picking 'From scratch' leaves scopes empty — Slack then refuses to install.)",
   "",
-  "Press ENTER on the optional prompts to skip them.",
+  "── manifest (copy from here to the next dashed line) ──",
+  ...SLACK_APP_MANIFEST_YAML.trimEnd().split("\n"),
+  "── end of manifest ──",
+  "",
+  "──────────────────────────────────────────────────────────────────────",
+  "STEP 2 — grab the two tokens (≈1 min):",
+  "──────────────────────────────────────────────────────────────────────",
+  `  • Bot token (xoxb-…): "OAuth & Permissions" → "Bot User OAuth Token"`,
+  "    (visible after the 'Install to Workspace' step above).",
+  `  • App-level token (xapp-…): "Basic Information" → "App-Level Tokens"`,
+  "    → Generate, with scope `connections:write`.",
+  "",
+  "Then paste both tokens at the prompts below. Press ENTER on optional ones to skip.",
   "",
 ];
 

@@ -40,10 +40,16 @@ function parseCsv(value: string | undefined): string[] {
     .filter((s) => s.length > 0);
 }
 
-/** Load + validate Slack config. Throws a clear error if a token is missing. */
-export function loadSlackConfig(overrides: SlackConfigOverrides = {}): SlackConfig {
-  const botToken = (overrides.botToken ?? process.env.SLACK_BOT_TOKEN ?? "").trim();
-  const appToken = (overrides.appToken ?? process.env.SLACK_APP_TOKEN ?? "").trim();
+/**
+ * Load + validate Slack config. Throws a clear error if a token is missing.
+ * `env` defaults to process.env; tests can pass a custom map.
+ */
+export function loadSlackConfig(
+  overrides: SlackConfigOverrides = {},
+  env: NodeJS.ProcessEnv = process.env,
+): SlackConfig {
+  const botToken = (overrides.botToken ?? env.SLACK_BOT_TOKEN ?? "").trim();
+  const appToken = (overrides.appToken ?? env.SLACK_APP_TOKEN ?? "").trim();
   if (!botToken) {
     throw new Error("SLACK_BOT_TOKEN is required (xoxb-… bot token)");
   }
@@ -59,8 +65,8 @@ export function loadSlackConfig(overrides: SlackConfigOverrides = {}): SlackConf
   return {
     botToken,
     appToken,
-    allowedUsers: parseCsv(process.env.SLACK_ALLOWED_USERS),
-    requireMention: parseBool(process.env.SLACK_REQUIRE_MENTION, true),
-    sessionEnv: process.env.COPILOT_TMUX_SESSION,
+    allowedUsers: parseCsv(env.SLACK_ALLOWED_USERS),
+    requireMention: parseBool(env.SLACK_REQUIRE_MENTION, true),
+    sessionEnv: env.COPILOT_TMUX_SESSION,
   };
 }

@@ -1,10 +1,13 @@
-# Slack → Copilot bridge (`omp slack`)
+# Slack → Copilot bridge (`omp gateway`)
 
 Drive a running GitHub Copilot CLI session from Slack: DM the bot (or @mention it in a
 channel) and it forwards your message to Copilot over the `comms`/tmux bridge, then posts
 Copilot's reply back **in-thread**.
 
 It uses **Socket Mode**, so it needs **no public URL** — it runs from your laptop behind NAT.
+
+Slack is the first connector that runs under the generic `omp gateway` runtime. Future
+connectors (Telegram, Discord, webhooks) plug into the same `gateway serve` command.
 
 ## 1. Create the Slack app (from manifest)
 
@@ -61,18 +64,28 @@ running first.
 # Terminal A — a running Copilot session (or `omp` to launch one)
 tmux new-session -d -s omp-9999    # any omp-<digits> name; or run: omp
 
-# Terminal B — the Slack bridge
+# Terminal B — the gateway (runs all configured connectors; today: slack)
 export SLACK_BOT_TOKEN=xoxb-...
 export SLACK_APP_TOKEN=xapp-...
 export SLACK_ALLOWED_USERS=U0123456789        # optional; omit/`*` = everyone
 # export COPILOT_TMUX_SESSION=omp-9999        # optional; auto-discovered if one session
-node dist/src/cli.js slack serve              # (or `omp slack serve` if linked)
+node dist/src/cli.js gateway serve            # (or `omp gateway serve` if linked)
+```
+
+To restrict the gateway to a subset of connectors (useful when more connectors land):
+```bash
+omp gateway serve --only slack
 ```
 
 Preflight without connecting:
 ```bash
-omp slack doctor          # bot_token / app_token present? copilot session resolvable?
+omp gateway status          # per-connector readiness: tokens present + copilot session resolvable
+omp gateway status --json   # machine-readable; exit 0 when ready
 ```
+
+`omp slack serve` and `omp slack doctor` still work as **deprecated aliases** that forward
+to `omp gateway serve --only slack` and `omp gateway status --only slack` — so any existing
+scripts keep running.
 
 ## 4. Use it
 
@@ -107,4 +120,4 @@ omp slack doctor          # bot_token / app_token present? copilot session resol
   `message.channels` subscription — a future addition.) It works as expected in DMs.
 - One Copilot session at a time (multiple `omp-<digits>` sessions → the bridge reports the
   ambiguity and asks you to pin `COPILOT_TMUX_SESSION`).
-- `omp slack serve` is a long-running foreground process — run it under tmux/systemd to keep it up.
+- `omp gateway serve` is a long-running foreground process — run it under tmux/systemd to keep it up.

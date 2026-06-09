@@ -129,7 +129,10 @@ export function createSlackConnector(opts: SlackConnectorOptions): Connector {
               userId: message.user,
               channelType: "im",
               isMention: false,
-              threadTs: message.thread_ts ?? message.ts,
+              // Only stay in-thread when the user wrote IN a thread. For top-level
+              // DMs we post inline — Slack hides DM thread replies under a
+              // "View thread" link, which makes the reply look like it never arrived.
+              threadTs: message.thread_ts,
               botUserId,
             },
             say,

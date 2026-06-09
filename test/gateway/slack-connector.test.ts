@@ -97,7 +97,9 @@ describe("createSlackConnector", () => {
     expect(bolt.stopCalls).toBe(1);
   });
 
-  it("DM handler forwards to handler deps and calls say() with reply", async () => {
+  it("DM handler: top-level DM gets an INLINE reply (no thread_ts) so Slack shows it in the conversation", async () => {
+    // Slack DMs hide thread replies under a 'View thread' link, which looks
+    // like the bot never responded. Top-level DMs must post inline.
     const bolt = makeBolt({ authUserId: "B1" });
     const seen: { session?: string; text?: string } = {};
     const c = createSlackConnector({
@@ -130,7 +132,37 @@ describe("createSlackConnector", () => {
     });
     expect(seen.text).toBe("ping");
     expect(said?.text).toBe("pong");
-    expect(said?.thread_ts).toBe("1.0");
+    expect(said?.thread_ts).toBeUndefined();
+  });
+
+  it("DM handler: when the user wrote IN a thread, the bot replies IN that thread", async () => {
+    const bolt = makeBolt({ authUserId: "B1" });
+    const c = createSlackConnector({
+      config: makeConfig(),
+      appFactory: () => bolt.app,
+      log: () => {},
+      handlerDeps: {
+        resolve: () => ({ ok: true, session: "omp-1", source: "discovery" }),
+        ask: async (s, t) => ({ ok: true, session: s, text: t, sent: true }),
+      },
+    });
+    await c.start();
+    let said: { text: string; thread_ts?: string } | undefined;
+    const say: SaySig = async (m) => {
+      said = m;
+      return undefined;
+    };
+    await bolt.messageHandler!({
+      message: {
+        text: "ping",
+        user: "U1",
+        channel_type: "im",
+        ts: "2.0",
+        thread_ts: "1.5", // user replied inside an existing thread
+      },
+      say,
+    });
+    expect(said?.thread_ts).toBe("1.5");
   });
 
   it("DM handler ignores messages from the bot itself", async () => {

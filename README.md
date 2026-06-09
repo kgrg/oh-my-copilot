@@ -192,6 +192,12 @@ omp ralph start "<task>" [--max-iterations N]
 omp ultrawork start "<objective>" [--task-count N]
 omp ultraqa start "<goal>" [--max-cycles N]
 omp council "<question>" [--models a,b,c] [--context @file] [--json]   # multi-model council
+omp comms status | send | recv | ask        # drive a running copilot tmux session
+omp gateway serve [--only slack]            # run chat connectors (today: slack)
+omp gateway status [--json]                 # per-connector readiness (no sockets)
+omp slack serve                             # deprecated alias of `gateway serve --only slack`
+omp slack doctor [--json]                   # deprecated alias of `gateway status --only slack`
+omp env init [--force]                      # write ~/.omp/.env (interactive Slack token setup)
 omp schedule add --id <id> --cron "*/15 * * * *" --prompt "<text>" [--allow-all-tools] [--cwd <dir>] [--model <m>] [--timeout <ms>] [--max-runs N] [--ttl-hours H] [--dry-run]
 omp schedule list                           # registered jobs + OS-install status
 omp schedule status <id>                    # last run + result summary
@@ -218,6 +224,29 @@ warning) and auto-expire after 72h unless `--ttl-hours`/`--max-runs` say otherwi
 run results are surfaced automatically at the start of new Copilot sessions. Always use
 `omp schedule remove`, never delete `.omp/state/schedule/` by hand, so the OS entry is
 uninstalled cleanly.
+
+### Chat bridge: drive Copilot from Slack
+
+`omp gateway` runs long-lived chat connectors that forward messages into a running
+Copilot CLI session (via tmux) and post replies back. Today's connector is `slack`
+(WebSocket Socket Mode — no public URL needed); the runtime is generic so future
+connectors (Telegram, Discord, webhooks) drop in as one file each.
+
+```bash
+# 1. a Copilot tmux session is running (any `omp-<digits>` name)
+tmux new-session -d -s omp-9999
+
+# 2. interactive setup — explains where to grab each token and writes
+#    ~/.omp/.env (chmod 600). Re-runnable; masks existing values.
+#    `omp` auto-loads ~/.omp/.env every invocation; shell exports still win.
+omp env init
+
+# 3. preflight, then run
+omp gateway status              # ready=true means tokens + session look good
+omp gateway serve               # blocks; ^C stops cleanly
+```
+
+Full Slack-app setup (manifest + scopes) lives in [`docs/slack-setup.md`](docs/slack-setup.md).
 
 ---
 

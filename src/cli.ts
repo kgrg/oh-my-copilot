@@ -4,6 +4,7 @@ import { pathToFileURL } from "node:url";
 import { findCapability, loadCatalogBundle, validateCatalogBundle } from "./catalog.js";
 import { findRegisteredCommand, registeredCommandHelpLines } from "./commands/registry.js";
 import type { CliResult } from "./commands/types.js";
+import { loadOmpEnv } from "./env/dotenv.js";
 import { inspectProject } from "./project.js";
 
 function hasFlag(args: string[], flag: string): boolean {
@@ -27,7 +28,7 @@ function printResult(result: CliResult, json: boolean): void {
 }
 
 function help(): string {
-  return `oh-my-copilot\n\nRun \`omp\` with no arguments to launch copilot (permissions bypass OFF).\nUse \`omp help\` to show this list.\n\nCommands:\n  (no args)                                     launch copilot (bypass OFF by default)\n  version [--json]\n  list [--json]\n  setup [--dry-run] [--scope project|user] [--plugin-root <dir>] [--json]\n  doctor [--json] [--copilot-bin <path>] [--skip-copilot]\n  launch -- <args...>\n  --madmax [args...]                          (bare-flag launch with permissions bypass; alias of --yolo)\n  team <N:role> "<task>" [--name <name>] [--json]\n  team status <name> [--json]\n  team shutdown <name> [--json]\n  team api claim-task --input '<json>' [--json]\n  team api transition-task-status --input '<json>' [--json]\n  team api send-message --input '<json>' [--json]\n  team api broadcast --input '<json>' [--json]\n  team api mailbox-list --input '<json>' [--json]\n  team api mailbox-mark-delivered --input '<json>' [--json]\n  council "<question>" [--models a,b,c|m:role:weight] [--context <text|@file>] [--rubric <text|@file>] [--synth <model>] [--probe] [--timeout <ms>] [--synth-timeout <ms>] [--min-survivors <n>] [--max-concurrency <n>] [--tmp-dir <dir>] [--json]\n${registeredCommandHelpLines().join("\n")}\n  ralph start "<task>" [--max-iterations <n>] [--session-id <id>] [--json]\n  ralph status [--json]\n  ralph tick [--json]\n  ralph cancel [--json]\n  ultrawork start "<objective>" [--task-count <n>] [--summary <s>] [--json]\n  ultrawork status [--json]\n  ultrawork cancel [--json]\n  ultraqa start "<goal>" [--max-cycles <n>] [--json]\n  ultraqa cycle pass|fail|pending [--json]\n  ultraqa status [--json]\n  ultraqa cancel [--json]\n  schedule add --id <id> --cron "<expr>" --prompt "<text>" [--bin copilot] [--model <m>] [--cwd <dir>] [--timeout <ms>] [--max-runs <n>] [--ttl-hours <h>] [--allow-all-tools] [--dry-run] [--json]\n  schedule list [--json]\n  schedule status <id> [--json]\n  schedule run-now <id> [--json]\n  schedule remove <id> [--json]\n  goal set "<objective>" [--json]\n  goal read [--json]\n  memory sync [--json]                          (render goal+directives into copilot-instructions.md)\n  daily-log set-goal "<text>" [--json]\n  daily-log add "<text>" [--json]\n  daily-log read [--days <n>] [--json]\n  daily-log prune [--keep-days <n>] [--json]\n  state write <key> <val> [--ttl <s>] | read|delete|status <key> | list | cleanup [--json]\n  project-memory read [<id>] | index | add-note "<title>" [--body "<text>"] | add-directive "<rule>" [--json]\n  trace timeline [<sessionId>] [--limit <n>] | summary [<sessionId>] | add <sessionId> <event> [<json>] [--json]\n  catalog list [--json]\n  catalog validate [--json]\n  catalog capability <id> [--json]\n  project inspect [--json]\n  skill install <skill-dir> [--root <repo>] [--scope project|user] [--dry-run] [--json]\n  lint:skills [--root <repo>]\n  sync:dry-run [--root <repo>]\n  jira:dry-run [--root <repo>]\n  jira render <plan-file> [--root <repo>] [--json]\n  jira apply <ticket-key-or-plan-file> --comment|--update|--transition|--link [--dry-run] [--json]\n`;
+  return `oh-my-copilot\n\nRun \`omp\` with no arguments to launch copilot (permissions bypass OFF).\nUse \`omp help\` to show this list.\n\nCommands:\n  (no args)                                     launch copilot (bypass OFF by default)\n  version [--json]\n  list [--json]\n  setup [--dry-run] [--scope project|user] [--plugin-root <dir>] [--json]\n  doctor [--json] [--copilot-bin <path>] [--skip-copilot]\n  launch -- <args...>\n  --madmax [args...]                          (bare-flag launch with permissions bypass; alias of --yolo)\n  team <N:role> "<task>" [--name <name>] [--json]\n  team status <name> [--json]\n  team shutdown <name> [--json]\n  team api claim-task --input '<json>' [--json]\n  team api transition-task-status --input '<json>' [--json]\n  team api send-message --input '<json>' [--json]\n  team api broadcast --input '<json>' [--json]\n  team api mailbox-list --input '<json>' [--json]\n  team api mailbox-mark-delivered --input '<json>' [--json]\n  council "<question>" [--models a,b,c|m:role:weight] [--context <text|@file>] [--rubric <text|@file>] [--synth <model>] [--probe] [--timeout <ms>] [--synth-timeout <ms>] [--min-survivors <n>] [--max-concurrency <n>] [--tmp-dir <dir>] [--json]\n  comms status [--session <name>] [--json]      (is copilot on + online? auto-discovers session)\n  comms send --text "<prompt>" [--force] [--session <name>] [--json]\n  comms recv [--wait] [--lines <n>] [--timeout <ms>] [--session <name>] [--json]\n  comms ask --text "<prompt>" [--force] [--lines <n>] [--timeout <ms>] [--session <name>] [--json]\n  gateway serve [--only <name>[,<name>]]        (run all configured connectors; today: slack)\n  gateway status [--json] [--only <name>[,...]] (per-connector readiness; no sockets opened)\n  gateway doctor [--json] [--only <name>[,...]] (alias for 'gateway status')\n  slack serve                                   (deprecated alias for 'gateway serve --only slack')\n  slack doctor [--json]                         (deprecated alias for 'gateway status --only slack')\n  env init [--force]                            (interactive: write ~/.omp/.env with Slack tokens)\n                                                non-interactive: set OMP_INIT_BOT_TOKEN/OMP_INIT_APP_TOKEN\n                                                (env vars preferred over --bot-token/--app-token flags)\n  (--session is optional when exactly one omp-<digits> tmux session is running)\n${registeredCommandHelpLines().join("\n")}\n  ralph start "<task>" [--max-iterations <n>] [--session-id <id>] [--json]\n  ralph status [--json]\n  ralph tick [--json]\n  ralph cancel [--json]\n  ultrawork start "<objective>" [--task-count <n>] [--summary <s>] [--json]\n  ultrawork status [--json]\n  ultrawork cancel [--json]\n  ultraqa start "<goal>" [--max-cycles <n>] [--json]\n  ultraqa cycle pass|fail|pending [--json]\n  ultraqa status [--json]\n  ultraqa cancel [--json]\n  schedule add --id <id> --cron "<expr>" --prompt "<text>" [--bin copilot] [--model <m>] [--cwd <dir>] [--timeout <ms>] [--max-runs <n>] [--ttl-hours <h>] [--allow-all-tools] [--dry-run] [--json]\n  schedule list [--json]\n  schedule status <id> [--json]\n  schedule run-now <id> [--json]\n  schedule remove <id> [--json]\n  goal set "<objective>" [--json]\n  goal read [--json]\n  memory sync [--json]                          (render goal+directives into copilot-instructions.md)\n  daily-log set-goal "<text>" [--json]\n  daily-log add "<text>" [--json]\n  daily-log read [--days <n>] [--json]\n  daily-log prune [--keep-days <n>] [--json]\n  state write <key> <val> [--ttl <s>] | read|delete|status <key> | list | cleanup [--json]\n  project-memory read [<id>] | index | add-note "<title>" [--body "<text>"] | add-directive "<rule>" [--json]\n  trace timeline [<sessionId>] [--limit <n>] | summary [<sessionId>] | add <sessionId> <event> [<json>] [--json]\n  catalog list [--json]\n  catalog validate [--json]\n  catalog capability <id> [--json]\n  project inspect [--json]\n  skill install <skill-dir> [--root <repo>] [--scope project|user] [--dry-run] [--json]\n  lint:skills [--root <repo>]\n  sync:dry-run [--root <repo>]\n  jira:dry-run [--root <repo>]\n  jira render <plan-file> [--root <repo>] [--json]\n  jira apply <ticket-key-or-plan-file> --comment|--update|--transition|--link [--dry-run] [--json]\n`;
 }
 
 async function resolveExistingInputPath(value: string): Promise<string> {
@@ -55,6 +56,11 @@ export async function runCli(argv = process.argv.slice(2)): Promise<CliResult> {
     const info = getVersionInfo({ importMetaUrl: import.meta.url });
     return json ? { ok: true, output: info } : { ok: true, message: formatVersionInfo(info) };
   }
+
+  // Auto-load ~/.omp/.env so subcommands that read process.env (slack tokens,
+  // OMP_*, COPILOT_TMUX_SESSION, etc.) work from any cwd without `source .env`.
+  // Shell exports take precedence — see src/env/dotenv.ts.
+  loadOmpEnv();
 
   // Bare `omp` (no subcommand) launches copilot directly with permissions
   // bypass OFF; `omp --madmax`/`--yolo` launch with bypass ON. For the bare
@@ -136,6 +142,22 @@ export async function runCli(argv = process.argv.slice(2)): Promise<CliResult> {
 
   if (group === "council") {
     return await handleCouncilCommand(argv, json);
+  }
+
+  if (group === "comms") {
+    return await handleCommsCommand(argv, json);
+  }
+
+  if (group === "slack") {
+    return await handleSlackCommand(argv, json);
+  }
+
+  if (group === "gateway") {
+    return await handleGatewayCommand(argv, json);
+  }
+
+  if (group === "env") {
+    return await handleEnvCommand(argv, json);
   }
 
   if (group === "ralph") {
@@ -619,6 +641,330 @@ async function handleCouncilCommand(argv: string[], json: boolean): Promise<CliR
   }
   lines.push(`Artifacts: ${result.tmpDir}`);
   return { ok: result.ok, exitCode: result.ok ? 0 : 1, message: lines.join("\n") };
+}
+
+async function handleCommsCommand(argv: string[], json: boolean): Promise<CliResult> {
+  const [, command] = argv;
+  const { resolveSession } = await import("./comms/resolve-session.js");
+  // `--session` present but with a missing/empty/flag-like value must fail loud,
+  // never silently fall through to env/discovery and target an unintended session.
+  const flagSession = flagValue(argv, "--session");
+  if (
+    hasFlag(argv, "--session") &&
+    (flagSession === undefined || flagSession === "" || flagSession.startsWith("-"))
+  ) {
+    return { ok: false, exitCode: 1, message: "invalid or missing --session value" };
+  }
+  const resolved = resolveSession({
+    flag: flagSession,
+    env: process.env.COPILOT_TMUX_SESSION,
+  });
+  if (!resolved.ok) {
+    return json
+      ? {
+          ok: false,
+          exitCode: 1,
+          output: { ok: false, error: resolved.error, candidates: resolved.candidates },
+        }
+      : { ok: false, exitCode: 1, message: resolved.error };
+  }
+  const session = resolved.session;
+  const sessionSource = resolved.source;
+
+  // Guard against a --session value that looks like a flag (e.g. --session --foo).
+  if (sessionSource === "flag" && session.startsWith("-")) {
+    return { ok: false, exitCode: 1, message: `invalid --session name: ${session}` };
+  }
+
+  const { commsStatus, commsSend, commsRecv, commsAsk } = await import("./comms/index.js");
+
+  if (command === "status") {
+    const r = await commsStatus(session);
+    return json
+      ? { ok: r.ok, output: { ...r, source: sessionSource } }
+      : {
+          ok: r.ok,
+          message: `session=${session} source=${sessionSource} on=${r.exists} online=${r.online} ready=${r.ready} busy=${r.busy}`,
+        };
+  }
+
+  if (command === "send") {
+    const text = flagValue(argv, "--text");
+    if (!text) {
+      return { ok: false, exitCode: 1, message: 'comms send requires --text "<prompt>"' };
+    }
+    const r = await commsSend(session, text, {}, { force: hasFlag(argv, "--force") });
+    return json
+      ? { ok: r.ok, exitCode: r.ok ? 0 : 1, output: r }
+      : {
+          ok: r.ok,
+          exitCode: r.ok ? 0 : 1,
+          message: r.ok ? `sent to ${session}` : `send failed: ${r.error}`,
+        };
+  }
+
+  if (command === "recv") {
+    let lines: number | undefined;
+    let timeoutMs: number | undefined;
+    try {
+      lines = parsePositiveIntFlag(flagValue(argv, "--lines"), "--lines");
+      timeoutMs = parsePositiveIntFlag(flagValue(argv, "--timeout"), "--timeout");
+    } catch (err) {
+      return { ok: false, exitCode: 1, message: String(err instanceof Error ? err.message : err) };
+    }
+    const r = await commsRecv(
+      session,
+      {},
+      { wait: hasFlag(argv, "--wait"), lines, timeoutMs },
+    );
+    if (json) {
+      return { ok: r.ok && !r.timedOut, exitCode: r.ok && !r.timedOut ? 0 : 1, output: r };
+    }
+    if (!r.ok) {
+      return { ok: false, exitCode: 1, message: `recv failed: ${r.error}` };
+    }
+    if (r.timedOut) {
+      return { ok: false, exitCode: 1, message: `recv timed out waiting for copilot\n${r.text ?? ""}` };
+    }
+    return { ok: true, exitCode: 0, message: r.text ?? "" };
+  }
+
+  if (command === "ask") {
+    const text = flagValue(argv, "--text");
+    if (!text) {
+      return { ok: false, exitCode: 1, message: 'comms ask requires --text "<prompt>"' };
+    }
+    let lines: number | undefined;
+    let timeoutMs: number | undefined;
+    try {
+      lines = parsePositiveIntFlag(flagValue(argv, "--lines"), "--lines");
+      timeoutMs = parsePositiveIntFlag(flagValue(argv, "--timeout"), "--timeout");
+    } catch (err) {
+      return { ok: false, exitCode: 1, message: String(err instanceof Error ? err.message : err) };
+    }
+    const r = await commsAsk(session, text, {}, { force: hasFlag(argv, "--force"), lines, timeoutMs });
+    if (json) {
+      return { ok: r.ok && !r.timedOut, exitCode: r.ok && !r.timedOut ? 0 : 1, output: r };
+    }
+    if (!r.ok) {
+      return { ok: false, exitCode: 1, message: `ask failed: ${r.error}` };
+    }
+    if (r.timedOut) {
+      return { ok: false, exitCode: 1, message: `ask timed out waiting for copilot\n${r.text ?? ""}` };
+    }
+    return { ok: true, exitCode: 0, message: r.text ?? "" };
+  }
+
+  return {
+    ok: false,
+    exitCode: 1,
+    message:
+      'Unknown comms subcommand. Try: comms status | send --text "<prompt>" | recv [--wait] | ask --text "<prompt>"',
+  };
+}
+
+async function handleEnvCommand(argv: string[], json: boolean): Promise<CliResult> {
+  const [, command] = argv;
+
+  if (command !== "init") {
+    return {
+      ok: false,
+      exitCode: 1,
+      message: "Unknown env subcommand. Try: env init [--force] [--bot-token x] [--app-token x]",
+    };
+  }
+
+  const { runEnvInit } = await import("./env/init.js");
+  const readline = await import("node:readline/promises");
+
+  // Preferred non-interactive path: env vars. Putting secrets in argv leaks
+  // them to shell history, ps output, and CI logs — so we read the safe
+  // input from env vars first, then fall back to flags (with a warning).
+  const botEnv = process.env.OMP_INIT_BOT_TOKEN;
+  const appEnv = process.env.OMP_INIT_APP_TOKEN;
+  const sessionEnv = process.env.OMP_INIT_SESSION;
+  const usersEnv = process.env.OMP_INIT_USERS;
+
+  const botFlag = flagValue(argv, "--bot-token");
+  const appFlag = flagValue(argv, "--app-token");
+  const sessionFlag = flagValue(argv, "--session");
+  const usersFlag = flagValue(argv, "--users");
+
+  if ((botFlag !== undefined || appFlag !== undefined) && process.env.OMP_INIT_NO_WARN !== "1") {
+    console.error(
+      "warning: --bot-token/--app-token leak via shell history and `ps`. " +
+        "Prefer OMP_INIT_BOT_TOKEN / OMP_INIT_APP_TOKEN env vars (set OMP_INIT_NO_WARN=1 to silence).",
+    );
+  }
+
+  const botToken = botEnv ?? botFlag;
+  const appToken = appEnv ?? appFlag;
+  const session = sessionEnv ?? sessionFlag;
+  const users = usersEnv ?? usersFlag;
+
+  // Non-interactive when stdin isn't a TTY OR when any answer is already
+  // supplied (via env or flag). Partial answers are allowed; missing required
+  // ones will be rejected by runEnvInit's validator.
+  const anyAnswer = botToken !== undefined || appToken !== undefined || session !== undefined || users !== undefined;
+  const force = hasFlag(argv, "--force");
+
+  let result;
+  if (anyAnswer || !process.stdin.isTTY) {
+    result = await runEnvInit({
+      io: {
+        // In non-interactive / --json mode we still must not corrupt stdout
+        // with diagnostic prints. Route everything but the JSON result to
+        // stderr so callers can pipe stdout safely.
+        print: (line) => (json ? console.error(line) : console.log(line)),
+        warn: (line) => console.error(line),
+        ask: async () => undefined,
+      },
+      force,
+      answers: {
+        slackBotToken: botToken ?? "",
+        slackAppToken: appToken ?? "",
+        copilotTmuxSession: session ?? "",
+        slackAllowedUsers: users ?? "",
+      },
+    });
+  } else {
+    const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+    try {
+      result = await runEnvInit({
+        io: {
+          print: (line) => console.log(line),
+          warn: (line) => console.error(line),
+          ask: (prompt) => rl.question(prompt),
+        },
+        force,
+      });
+    } finally {
+      rl.close();
+    }
+  }
+
+  if (json) {
+    return {
+      ok: result.ok,
+      exitCode: result.ok ? 0 : 1,
+      output: { ok: result.ok, path: result.path, reason: result.reason },
+    };
+  }
+  return {
+    ok: result.ok,
+    exitCode: result.ok ? 0 : 1,
+    message: result.ok ? `wrote ${result.path}` : (result.reason ?? "env init failed"),
+  };
+}
+
+async function handleSlackCommand(argv: string[], json: boolean): Promise<CliResult> {
+  // Backwards-compatible alias: `omp slack <cmd>` forwards to the generalized
+  // gateway runtime (scoped to slack). `slack doctor --json` keeps its legacy
+  // flat output shape so existing scripts that parsed it don't break — see
+  // `src/cli.ts` pre-refactor at 5c08a88.
+  const [, command, ...rest] = argv;
+
+  if (command === "serve") {
+    return await handleGatewayCommand(["gateway", "serve", "--only", "slack", ...rest], json);
+  }
+  if (command === "doctor" || command === "status") {
+    const hasBot = !!process.env.SLACK_BOT_TOKEN;
+    const hasApp = !!process.env.SLACK_APP_TOKEN;
+    const { resolveSession } = await import("./comms/resolve-session.js");
+    const resolved = resolveSession({ env: process.env.COPILOT_TMUX_SESSION });
+    const startable = hasBot && hasApp;
+    const ready = startable && resolved.ok;
+    const output = {
+      botToken: hasBot,
+      appToken: hasApp,
+      copilotSession: resolved.ok ? resolved.session : null,
+      copilotError: resolved.ok ? undefined : resolved.error,
+      ready,
+    };
+    return json
+      ? { ok: startable, exitCode: startable ? 0 : 1, output }
+      : {
+          ok: startable,
+          exitCode: startable ? 0 : 1,
+          message: `bot_token=${hasBot} app_token=${hasApp} copilot_session=${
+            output.copilotSession ?? `(none: ${output.copilotError ?? "unknown"})`
+          } ready=${ready}`,
+        };
+  }
+  return {
+    ok: false,
+    exitCode: 1,
+    message: "Unknown slack subcommand. Try: slack serve | slack doctor",
+  };
+}
+
+async function handleGatewayCommand(argv: string[], json: boolean): Promise<CliResult> {
+  const [, command] = argv;
+  const { buildConnectors, KNOWN_CONNECTORS } = await import("./gateway/registry.js");
+  const { runGateway, getGatewayStatus, parseOnlyFlag } = await import("./gateway/runtime.js");
+
+  const only = parseOnlyFlag(flagValue(argv, "--only"));
+  if (only) {
+    const unknown = only.filter((n) => !KNOWN_CONNECTORS.includes(n));
+    if (unknown.length > 0) {
+      return {
+        ok: false,
+        exitCode: 1,
+        message: `unknown connector(s): ${unknown.join(", ")} — known: ${KNOWN_CONNECTORS.join(", ")}`,
+      };
+    }
+  }
+
+  if (command === "serve") {
+    const built = buildConnectors(only);
+    if (built.connectors.length === 0) {
+      const reason =
+        built.warnings.length > 0
+          ? built.warnings.join("; ")
+          : "no connectors configured — set SLACK_BOT_TOKEN+SLACK_APP_TOKEN or pass --only <name>";
+      return { ok: false, exitCode: 1, message: reason };
+    }
+    try {
+      await runGateway({ connectors: built.connectors });
+    } catch (err) {
+      return {
+        ok: false,
+        exitCode: 1,
+        message: `gateway failed: ${err instanceof Error ? err.message : String(err)}`,
+      };
+    }
+    return { ok: true, message: "gateway stopped" };
+  }
+
+  if (command === "status" || command === "doctor") {
+    const built = buildConnectors(only);
+    const rows = built.doctors.map((d) => {
+      const s = d.doctor();
+      return { name: d.name, ready: s.ready, detail: s.detail };
+    });
+    const ready = rows.length > 0 && rows.every((r) => r.ready);
+    if (json) {
+      return {
+        ok: ready,
+        exitCode: ready ? 0 : 1,
+        output: { ready, connectors: rows, warnings: built.warnings },
+      };
+    }
+    const lines = [
+      `ready=${ready}`,
+      ...rows.map((r) => `  ${r.name}: ready=${r.ready}${r.detail ? ` (${r.detail})` : ""}`),
+      ...built.warnings.map((w) => `  warning: ${w}`),
+    ];
+    return { ok: ready, exitCode: ready ? 0 : 1, message: lines.join("\n") };
+  }
+
+  // Silence the unused warning emitted when no command path is hit.
+  void getGatewayStatus;
+  return {
+    ok: false,
+    exitCode: 1,
+    message: "Unknown gateway subcommand. Try: gateway serve | status | doctor",
+  };
 }
 
 const TEAM_SPEC_RE = /^(\d+):([\w-]+)$/;

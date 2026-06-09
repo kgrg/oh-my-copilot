@@ -56,6 +56,7 @@ export interface TmuxApi {
   killSession(session: string): TmuxResult;
   paneDead(target: string): boolean;
   sessionExists(session: string): boolean;
+  listSessions(): string[];
 }
 
 export function makeTmux(runner: TmuxRunner = tmuxExec): TmuxApi {
@@ -91,6 +92,14 @@ export function makeTmux(runner: TmuxRunner = tmuxExec): TmuxApi {
     sessionExists(session) {
       const r = runner(["has-session", "-t", session]);
       return r.status === 0;
+    },
+    listSessions() {
+      const r = runner(["list-sessions", "-F", "#{session_name}"]);
+      if (r.status !== 0) return [];
+      return r.stdout
+        .split("\n")
+        .map((l) => l.trim())
+        .filter((l) => l.length > 0);
     },
   };
 }

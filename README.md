@@ -195,10 +195,12 @@ omp council "<question>" [--models a,b,c] [--context @file] [--json]   # multi-m
 omp comms status | send | recv | ask        # drive a running copilot tmux session
 omp gateway serve [--only slack]            # run chat connectors (today: slack)
 omp gateway status [--json]                 # per-connector readiness (no sockets)
+omp gateway notify --text "<msg>" [--target slack:C…|G…|D…|U… [:thread_ts]] [--thread-ts <ts>] [--json]
+                                            # one-shot outbound Slack post; falls back to SLACK_HOME_CHANNEL
 omp slack serve                             # deprecated alias of `gateway serve --only slack`
 omp slack doctor [--json]                   # deprecated alias of `gateway status --only slack`
 omp env init [--force]                      # write ~/.omp/.env (interactive Slack token setup)
-omp schedule add --id <id> --cron "*/15 * * * *" --prompt "<text>" [--allow-all-tools] [--cwd <dir>] [--model <m>] [--timeout <ms>] [--max-runs N] [--ttl-hours H] [--dry-run]
+omp schedule add --id <id> --cron "*/15 * * * *" --prompt "<text>" [--allow-all-tools] [--cwd <dir>] [--model <m>] [--timeout <ms>] [--max-runs N] [--ttl-hours H] [--notify-target slack:U0123ABCD] [--dry-run]
 omp schedule list                           # registered jobs + OS-install status
 omp schedule status <id>                    # last run + result summary
 omp schedule run-now <id>                   # trigger one run immediately

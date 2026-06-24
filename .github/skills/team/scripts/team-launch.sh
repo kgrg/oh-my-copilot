@@ -15,11 +15,13 @@ set -euo pipefail
 
 SESSION=""
 LANES_FILE=""
+NO_MONITOR=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --session) SESSION="$2"; shift 2 ;;
-    --lanes)   LANES_FILE="$2"; shift 2 ;;
+    --session)    SESSION="$2"; shift 2 ;;
+    --lanes)      LANES_FILE="$2"; shift 2 ;;
+    --no-monitor) NO_MONITOR=1; shift ;;
     *) echo "Unknown arg: $1" >&2; exit 1 ;;
   esac
 done
@@ -42,12 +44,15 @@ if [[ -z "${TMUX:-}" ]]; then
   echo "Not inside a tmux session. Run this from within tmux." >&2; exit 1
 fi
 
+# OMP_TEAM_WORKER tags worker sessions so the agentStop hook skips loop
+# injection — otherwise a worker spawned inside a project with an active
+# ralph/ultrawork/ultraqa loop gets hijacked by "[RALPH ITERATION N]" prompts.
 if command -v omp &>/dev/null; then
-  AGENT_CMD="omp --madmax"
+  AGENT_CMD="OMP_TEAM_WORKER=1 omp --madmax"
 elif command -v copilot &>/dev/null; then
   # --yolo = all permissions (tools+paths+urls) so worker panes never block on a
   # trust/permission dialog. Matches the bypass `omp --madmax` grants.
-  AGENT_CMD="copilot --yolo"
+  AGENT_CMD="OMP_TEAM_WORKER=1 copilot --yolo"
 else
   echo "Neither omp nor copilot CLI found" >&2; exit 1
 fi
@@ -58,6 +63,10 @@ if [[ "$LANE_COUNT" -lt 1 ]]; then
 fi
 
 CWD=$(pwd)
+# Each worker writes its final result here so the lead can collect deterministically
+# (`omp team collect --dir`), rather than scraping live panes.
+DELIVERY_DIR="/tmp/team-$SESSION"
+mkdir -p "$DELIVERY_DIR"
 POLL="${TEAM_POLL_INTERVAL:-2}"
 MAX_READY="${TEAM_MAX_READY_WAIT:-60}"
 MAX_DONE="${TEAM_MAX_COMPLETION_WAIT:-300}"
@@ -144,7 +153,13 @@ echo "📨 Sending prompts..."
 for i in $(seq 0 $((LANE_COUNT - 1))); do
   LANE_PROMPT=$(jq -r ".[$i].prompt" "$LANES_FILE")
   LANE_NAME=$(jq -r ".[$i].name" "$LANES_FILE")
+  LANE_ID=$(jq -r ".[$i].id" "$LANES_FILE")
   PANE_ID="${PANE_IDS[$i]}"
+
+  # Append a deterministic delivery instruction: the worker writes its final
+  # result to a file so the lead's `omp team collect` knows it's done (vs
+  # guessing from the pane). Kept on one line so send-keys submits cleanly.
+  LANE_PROMPT="$LANE_PROMPT  IMPORTANT: when fully finished, write your complete final result to the file $DELIVERY_DIR/$LANE_ID.result.md (e.g. with a heredoc), then stop."
 
   # -l = literal (no key interpretation), then submit. Use the `Enter` key NAME,
   # not C-m: Copilot CLI >=1.0.61 ignores a literal carriage return, so C-m left
@@ -157,6 +172,35 @@ for i in $(seq 0 $((LANE_COUNT - 1))); do
 done
 
 tmux select-pane -t '{left}'
+
+# Prompts are sent — in --no-monitor mode return now so the caller (a Copilot
+# lead) doesn't block on the long monitor loop and doesn't get killed mid-run
+# by its shell-tool cleanup. The agents keep working in the panes for the user
+# to watch; this is the default for the in-session visual flow.
+if [[ -n "$NO_MONITOR" ]]; then
+  # Write a manifest (lane id/name → pane) so `omp team collect --dir` can map
+  # delivery files to lanes and flag a crashed pane as dead.
+  MANIFEST="[]"
+  for i in $(seq 0 $((LANE_COUNT - 1))); do
+    MANIFEST=$(echo "$MANIFEST" | jq \
+      --arg id "$(jq -r ".[$i].id" "$LANES_FILE")" \
+      --arg name "$(jq -r ".[$i].name" "$LANES_FILE")" \
+      --arg pane "${PANE_IDS[$i]}" \
+      '. + [{id:$id,name:$name,paneId:$pane}]')
+  done
+  echo "$MANIFEST" > "$DELIVERY_DIR/manifest.json"
+
+  echo ""
+  echo "✅ $LANE_COUNT agents launched and prompted ($SESSION)."
+  echo "📋 Lane → pane:"
+  for i in $(seq 0 $((LANE_COUNT - 1))); do
+    echo "   $(jq -r ".[$i].name" "$LANES_FILE") → ${PANE_IDS[$i]}"
+  done
+  echo ""
+  echo "➡️  Collect — poll this until allDone, then read each lane's result and synthesize:"
+  echo "   omp team collect --dir $DELIVERY_DIR --json"
+  exit 0
+fi
 
 # ── step 4: monitor completion ───────────────────────────────────────
 

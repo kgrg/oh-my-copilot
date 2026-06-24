@@ -47,23 +47,54 @@ Write a temporary file at `/tmp/team-lanes-<timestamp>.json`:
 
 ### Step 2 — Launch
 
+Resolve the launcher (installed plugin if present, else a dev checkout) and run
+it with `--no-monitor`. That mode splits the panes, launches the agents, sends
+each lane's prompt, then returns (~20–30s) — it does NOT block on the long
+completion-monitor loop. Run it in the **foreground** (no `&`/`nohup`): a
+backgrounded launcher gets killed by your shell-tool cleanup before it sends the
+prompts, leaving the agents idle.
+
 ```bash
-# Installed-plugin path (in a dev checkout the script is at the repo-relative
-# .github/skills/team/scripts/team-launch.sh instead):
-bash ~/.copilot/installed-plugins/oh-my-copilot/oh-my-copilot/.github/skills/team/scripts/team-launch.sh \
-  --session "team-<name>" --lanes <lanes-file>
+if [ -f ~/.copilot/installed-plugins/oh-my-copilot/oh-my-copilot/.github/skills/team/scripts/team-launch.sh ]; then
+  bash ~/.copilot/installed-plugins/oh-my-copilot/oh-my-copilot/.github/skills/team/scripts/team-launch.sh \
+    --session "team-<name>" --lanes <lanes-file> --no-monitor
+else
+  bash .github/skills/team/scripts/team-launch.sh \
+    --session "team-<name>" --lanes <lanes-file> --no-monitor
+fi
 ```
 
-The script:
+The script (with `--no-monitor`):
 1. Splits the **current window** into panes
 2. Launches `omp --madmax` in each
 3. Auto-accepts folder trust prompts
-4. Waits for readiness, sends prompts
-5. Monitors completion and prints a results summary
+4. Waits for readiness, sends each lane's prompt
+5. Returns — the agents keep working in the panes for the user to watch
+   (omit `--no-monitor` to instead block and print a completion summary)
 
-### Step 3 — Report
+### Step 3 — Collect (you drive the loop — do NOT go idle)
 
-The script blocks and prints all results. Relay the output to the user.
+Each worker was told to write its final result to a file; the launcher prints the
+exact collect command (`omp team collect --dir <dir> --json`). Completion is a
+real file write — not a guess from the live pane — so it's reliable. **You must
+actively poll** until every lane has delivered, then synthesize. Do not stop
+after launching and wait.
+
+```bash
+omp team collect --dir /tmp/team-<name> --json
+```
+
+Returns `{ dir, total, doneCount, allDone, lanes: [{ id, name, status, output }] }`
+where `status` is `working` | `done` | `dead`. Procedure:
+
+1. Call collect. If `allDone` is false, `sleep 25` and call it again. Keep
+   looping — the workers run live in the panes.
+2. A `done` lane's `output` is the worker's delivered result; a `dead` lane's
+   pane exited without delivering (note it as failed/needs review).
+3. When `allDone` is true, read every lane's `output` and **synthesize the
+   combined results back to the user** (per lane: what it produced).
+
+Keep the loop bounded (e.g. stop after ~15 min and report whatever delivered).
 
 ## Optional mode — Runtime (`omp team`)
 

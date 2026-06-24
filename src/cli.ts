@@ -1329,6 +1329,20 @@ async function handleTeamCommand(argv: string[], json: boolean): Promise<CliResu
         };
   }
 
+  if (command === "collect") {
+    const dir = flagValue(argv, "--dir");
+    if (!dir) {
+      return { ok: false, exitCode: 1, message: "team collect requires --dir <delivery-dir>" };
+    }
+    const { collectDeliveries, formatCollect, readManifest } = await import("./team/collect.js");
+    const lanes = readManifest(dir);
+    if (lanes.length === 0) {
+      return { ok: false, exitCode: 1, message: `no manifest.json (or empty) in ${dir} — was the team launched?` };
+    }
+    const result = collectDeliveries(dir, lanes);
+    return json ? { ok: true, output: result } : { ok: true, message: formatCollect(result) };
+  }
+
   if (command === "monitor-panes") {
     const leaderPaneId = flagValue(argv, "--leader-pane");
     const workerPaneIds = argv

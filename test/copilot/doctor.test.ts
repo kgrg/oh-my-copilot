@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 import { chmodSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { formatDoctor, runDoctor } from "../../src/copilot/doctor.js";
+import { classifyMemoryReviewProbe, formatDoctor, runDoctor } from "../../src/copilot/doctor.js";
+import { setMemoryConfigValue } from "../../src/memory-review/config.js";
 
 function tempProjectWithPlugin() {
   const root = mkdtempSync(path.join(tmpdir(), "omc-copilot-doctor-"));
@@ -182,6 +183,66 @@ console.log(JSON.stringify({}));
     const copilot = report.checks.find((c) => c.name === "copilot-cli");
     expect(copilot?.status).toBe("fail");
     expect(report.ok).toBe(false);
+  });
+});
+
+describe("memory-review-model deep check", () => {
+  /** Isolated global ~/.omp home so config writes don't leak across tests. */
+  async function withHome<T>(fn: (home: string) => T): Promise<T> {
+    const prev = process.env.OMP_HOME_OVERRIDE;
+    const home = mkdtempSync(path.join(tmpdir(), "omc-doctor-home-"));
+    process.env.OMP_HOME_OVERRIDE = home;
+    try {
+      return fn(home);
+    } finally {
+      if (prev === undefined) delete process.env.OMP_HOME_OVERRIDE;
+      else process.env.OMP_HOME_OVERRIDE = prev;
+    }
+  }
+
+  it("is absent without --deep", () => {
+    const root = tempProjectWithPlugin();
+    const report = runDoctor({ cwd: root, pluginRoot: root, skipCopilot: true });
+    expect(report.checks.map((c) => c.name)).not.toContain("memory-review-model");
+  });
+
+  it("is skipped (pass) when memory-mode is off", async () => {
+    await withHome(() => {
+      const root = tempProjectWithPlugin();
+      const report = runDoctor({ cwd: root, pluginRoot: root, deepCheck: true, copilotBin: "definitely-not-real-xyz" });
+      const check = report.checks.find((c) => c.name === "memory-review-model");
+      expect(check?.status).toBe("pass");
+      expect(check?.detail).toContain("skipped");
+    });
+  });
+
+  it("warns (probe failed) when memory-mode on but copilot is missing", async () => {
+    await withHome((home) => {
+      const root = tempProjectWithPlugin();
+      setMemoryConfigValue(root, "memoryMode", "on", { scope: "global", homeDir: home });
+      const report = runDoctor({ cwd: root, pluginRoot: root, deepCheck: true, copilotBin: "definitely-not-real-xyz" });
+      const check = report.checks.find((c) => c.name === "memory-review-model");
+      // The model probe never hard-fails (warn, not fail), so it alone never
+      // flips report.ok. (copilot-cli fails separately on the fake bin here.)
+      expect(check?.status).toBe("warn");
+    });
+  });
+});
+
+describe("classifyMemoryReviewProbe", () => {
+  it("passes on a clean exit", () => {
+    expect(classifyMemoryReviewProbe("gpt-5-mini", { status: 0, stderr: "" })).toMatchObject({ status: "pass" });
+  });
+  it("warns with an actionable hint on the unavailable signature", () => {
+    const c = classifyMemoryReviewProbe("bad", { status: 1, stderr: 'Model "bad" is not available.' });
+    expect(c.status).toBe("warn");
+    expect(c.detail).toContain("omp config set memory-review-model");
+  });
+  it("warns generically on a non-signature failure", () => {
+    expect(classifyMemoryReviewProbe("x", { status: 2, stderr: "weird" }).detail).toContain("probe failed");
+  });
+  it("warns when the spawn itself failed", () => {
+    expect(classifyMemoryReviewProbe("x", { status: null, stderr: "", failed: true }).status).toBe("warn");
   });
 });
 

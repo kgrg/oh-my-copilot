@@ -4,6 +4,7 @@ import {
   DEFAULT_PROBE_TIMEOUT_MS,
   KNOWN_MODEL_SLUGS,
   probeModels,
+  type ProbeModelsOptions,
   type ProbeStatus,
 } from "../copilot/models.js";
 import { readMemoryConfig } from "../memory-review/config.js";
@@ -43,10 +44,11 @@ const STATUS_NOTE: Record<ProbeStatus, string> = {
 export async function collectModelReport(
   spawn: CouncilSpawn,
   sources: Map<string, ModelSource>,
-  opts: { timeoutMs?: number } = {},
+  opts: { timeoutMs?: number; onProbe?: ProbeModelsOptions["onProbe"] } = {},
 ): Promise<ModelReportRow[]> {
   const probed = await probeModels(spawn, [...sources.keys()], {
     timeoutMs: opts.timeoutMs ?? DEFAULT_PROBE_TIMEOUT_MS,
+    onProbe: opts.onProbe,
   });
   const rows: ModelReportRow[] = probed.map((r) => ({
     slug: r.model,
@@ -77,7 +79,21 @@ export const modelsCommand: CommandModule = {
     const homeDir = process.env.OMP_HOME_OVERRIDE || undefined;
     const configured = readMemoryConfig(context.cwd, { homeDir }).memoryReviewModel;
     const sources = buildCandidates({ configured, candidates: parseCandidates(argv) });
-    const rows = await collectModelReport(createReviewSpawn(), sources);
+    // Probing is slow (copilot's headless -p ~12s each), so show live progress on
+    // stderr when attached to a terminal — never on stdout (keeps --json/report clean).
+    const showProgress = process.stderr.isTTY && !context.json;
+    if (showProgress) {
+      const secs = Math.round(DEFAULT_PROBE_TIMEOUT_MS / 1000);
+      process.stderr.write(`Probing ${sources.size} model(s) — up to ~${secs}s each (copilot's headless mode is slow)…\n`);
+    }
+    const rows = await collectModelReport(createReviewSpawn(), sources, {
+      onProbe: showProgress
+        ? (r, done, total) => {
+            const mark = r.status === "available" ? "✓" : r.status === "unavailable" ? "✗" : "?";
+            process.stderr.write(`  [${done}/${total}] ${mark} ${r.model}\n`);
+          }
+        : undefined,
+    });
     return context.json
       ? { ok: true, output: { models: rows } }
       : { ok: true, message: formatModelReport(rows) };

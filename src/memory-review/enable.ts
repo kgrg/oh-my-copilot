@@ -75,8 +75,14 @@ export async function enableMemoryMode(opts: EnableMemoryOptions): Promise<Enabl
   if (interactive) {
     let offered = candidates;
     if (validate) {
-      io.print("Probing models (checks which your plan can actually run)…");
-      probed = await probeModels(spawn, candidates, { timeoutMs });
+      io.print(`Probing ${candidates.length} model(s) — up to ~${Math.round(timeoutMs / 1000)}s each (copilot's headless mode is slow)…`);
+      probed = await probeModels(spawn, candidates, {
+        timeoutMs,
+        onProbe: (r, done, total) => {
+          const mark = r.status === "available" ? "✓" : r.status === "unavailable" ? "✗" : "?";
+          io.print(`  [${done}/${total}] ${mark} ${r.model}`);
+        },
+      });
       const available = probed.filter((r) => r.status === "available").map((r) => r.model);
       const unavailable = probed.filter((r) => r.status === "unavailable").map((r) => r.model);
       const unknown = probed.filter((r) => r.status === "unknown").map((r) => r.model);

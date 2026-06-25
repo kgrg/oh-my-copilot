@@ -72,13 +72,24 @@ export async function probeModel(
  * council's probeRoster (engine.ts) which probes CouncilMemberSpec[]; kept
  * separate because the input/return shapes differ — unify if a 3rd caller appears.
  */
+export interface ProbeModelsOptions {
+  maxConcurrency?: number;
+  timeoutMs?: number;
+  /** Fired as each probe resolves (for progress UIs). done counts up to total. */
+  onProbe?: (result: ProbeResult, done: number, total: number) => void;
+}
+
 export async function probeModels(
   spawn: CouncilSpawn,
   slugs: string[],
-  opts: { maxConcurrency?: number; timeoutMs?: number } = {},
+  opts: ProbeModelsOptions = {},
 ): Promise<ProbeResult[]> {
   const distinct = Array.from(new Set(slugs));
-  return runWithConcurrency(distinct, opts.maxConcurrency ?? 4, (model) =>
-    probeModel(spawn, model, opts.timeoutMs),
-  );
+  let done = 0;
+  return runWithConcurrency(distinct, opts.maxConcurrency ?? 4, async (model) => {
+    const result = await probeModel(spawn, model, opts.timeoutMs);
+    done += 1;
+    opts.onProbe?.(result, done, distinct.length);
+    return result;
+  });
 }

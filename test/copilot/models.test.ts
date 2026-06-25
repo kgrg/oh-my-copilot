@@ -77,6 +77,17 @@ describe("probeModels", () => {
     expect(results.find((r) => r.model === "gpt-5-mini")?.status).toBe("available");
     expect(results.find((r) => r.model === "nope")?.status).toBe("unavailable");
   });
+
+  it("fires onProbe once per distinct model with a rising done count", async () => {
+    const spawn = spawnFromMap({ a: { exitCode: 0 }, b: { exitCode: 0 } });
+    const calls: Array<{ model: string; done: number; total: number }> = [];
+    await probeModels(spawn, ["a", "b", "a"], {
+      onProbe: (r, done, total) => calls.push({ model: r.model, done, total }),
+    });
+    expect(calls).toHaveLength(2); // distinct
+    expect(calls.map((c) => c.done).sort()).toEqual([1, 2]);
+    expect(calls.every((c) => c.total === 2)).toBe(true);
+  });
 });
 
 describe("KNOWN_MODEL_SLUGS", () => {

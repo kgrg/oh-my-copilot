@@ -106,20 +106,23 @@ describe("enableMemoryMode", () => {
   it("interactive: a numeric answer picks from the available list", async () => {
     const home = root();
     const io = makeIO(["1"]);
+    // Make exactly one model available so the picker list is deterministic
+    // regardless of the curated KNOWN_MODEL_SLUGS roster.
+    const onlyAvailable = "claude-haiku-4.5";
+    const spawn: CouncilSpawn = async (req) =>
+      req.model === onlyAvailable
+        ? resp({ exitCode: 0 })
+        : resp({ exitCode: 1, stderr: `Model "${req.model}" is not available.` });
     const res = await enableMemoryMode({
       cwd: root(),
       homeDir: home,
       interactive: true,
       validate: true,
-      // only gpt-4.1 is available → it is item 1
-      spawn: spawnFromMap({
-        "gpt-5-mini": { exitCode: 1, stderr: 'Model "gpt-5-mini" is not available.' },
-        "gpt-4.1": { exitCode: 0 },
-      }),
+      spawn,
       io,
     });
     expect(res.ok).toBe(true);
-    expect(res.model).toBe("gpt-4.1");
+    expect(res.model).toBe(onlyAvailable); // the sole available model is item 1
   });
 
   it("clears a stale project memoryMode so the global enable is authoritative", async () => {

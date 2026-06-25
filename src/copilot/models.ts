@@ -11,17 +11,22 @@ import type { CouncilSpawn } from "../council/types.js";
  */
 
 /**
- * Curated candidate slugs to probe by default. Last updated: 2026-06-25. Copilot
- * has no model-listing API, so this is hand-maintained; keep it small. Replace
- * with a dynamic source if/when copilot exposes one. `--candidates` and the
- * configured model cover anything missing here.
+ * Curated candidate slugs to probe by default. Last updated: 2026-06-25 —
+ * verified against live Copilot CLI v1.0.65 via `omp models`. Copilot has no
+ * model-listing API, so this is hand-maintained; keep it small. NOTE: these are
+ * the `--model` slugs (headless), which are NOT always the same set the
+ * interactive `/model` picker shows — some picker-only models (e.g.
+ * MAI-Code-1-Flash) are rejected by `--model`, so they are intentionally absent.
+ * `--candidates` and the configured model cover anything missing here.
  */
 export const KNOWN_MODEL_SLUGS: readonly string[] = [
-  "gpt-5-mini",
-  "gpt-4.1",
+  "gpt-5-mini", // cheap, included (no premium request) — the default review model
+  "gpt-5.4-mini",
+  "gpt-5.4",
   "claude-haiku-4.5",
+  "claude-sonnet-4.6",
   "claude-sonnet-4.5",
-  "gemini-2.5-pro",
+  "gemini-3.5-flash",
 ];
 
 export type ProbeStatus = "available" | "unavailable" | "unknown";

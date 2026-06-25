@@ -30,9 +30,15 @@ export interface ResolveCopilotPathsOptions {
 export function resolveCopilotPaths(options: ResolveCopilotPathsOptions = {}): CopilotPaths {
   const proj = resolveProjectPaths({ cwd: options.cwd, packageRoot: options.projectRoot });
   const projectRoot = proj.packageRoot;
+  // pluginRoot is where omp's bundle lives (hooks/, .github/skills, scripts/) —
+  // the omp PACKAGE, not the caller's cwd project. Default to THIS module's own
+  // package root so callers that don't pass importMetaUrl (bare launch, `omp
+  // update`) still locate the bundled hooks/skills. Without this, packageRoot
+  // fell back to the cwd project (no hooks.json there) and hook install silently
+  // no-op'd — the real cause of "omp update / bare omp installs no hooks".
   const packageRoot = options.importMetaUrl
     ? packageRootFromImportMeta(options.importMetaUrl)
-    : projectRoot;
+    : packageRootFromImportMeta(import.meta.url);
   const envPluginRoot = process.env.OMP_PLUGIN_ROOT ?? process.env.OMC_PLUGIN_ROOT;
   const pluginRoot = options.pluginRoot
     ? resolve(options.pluginRoot)

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { mkdtempSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { resolveCopilotPaths } from "../../src/copilot/paths.js";
@@ -34,6 +34,16 @@ describe("resolveCopilotPaths", () => {
       if (original === undefined) delete process.env.OMC_PLUGIN_ROOT;
       else process.env.OMC_PLUGIN_ROOT = original;
     }
+  });
+
+  it("defaults pluginRoot to the omp package (not cwd's project) so bundled hooks resolve", () => {
+    // Regression: without importMetaUrl/pluginRoot/env, pluginRoot must still point
+    // at the omp package that ships hooks/hooks.json — NOT the caller's cwd project
+    // (which has no hooks.json). This is why bare `omp` / `omp update` could no-op.
+    const root = tempProject(); // a temp dir with a package.json but no hooks/
+    const paths = resolveCopilotPaths({ cwd: root });
+    expect(paths.pluginRoot).not.toBe(root);
+    expect(existsSync(paths.hooksManifest)).toBe(true);
   });
 
   it("explicit pluginRoot overrides env", () => {

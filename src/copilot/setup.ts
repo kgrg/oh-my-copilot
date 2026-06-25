@@ -5,6 +5,10 @@ import { resolveCopilotPaths, type CopilotPaths, type ResolveCopilotPathsOptions
 export interface SetupOptions extends ResolveCopilotPathsOptions {
   dryRun?: boolean;
   scope?: "project" | "user";
+  /** Overwrite bundled skills/agents that exist but differ from the bundle.
+   *  Without it, changed files are reported as "skip-changed" (the CLI offers an
+   *  interactive override); identical files are always skipped. */
+  force?: boolean;
 }
 
 export type SetupActionKind =
@@ -12,6 +16,7 @@ export type SetupActionKind =
   | "create"
   | "update"
   | "skip-exists"
+  | "skip-changed"
   | "skip-source-missing"
   | "skip-source-invalid";
 
@@ -58,7 +63,21 @@ minimized before it re-enters model context, with raw output preserved on disk a
 recorded in the cost ledger. Budget gates and retry-cost guidance are not current live behavior.
 `;
 
-function copyDirRecursive(source: string, target: string, actions: SetupAction[], dryRun: boolean): void {
+function filesEqual(a: string, b: string): boolean {
+  try {
+    return readFileSync(a, "utf8") === readFileSync(b, "utf8");
+  } catch {
+    return false;
+  }
+}
+
+function copyDirRecursive(
+  source: string,
+  target: string,
+  actions: SetupAction[],
+  dryRun: boolean,
+  force: boolean,
+): void {
   if (!existsSync(source)) {
     actions.push({ source, target, kind: "skip-source-missing" });
     return;
@@ -68,10 +87,24 @@ function copyDirRecursive(source: string, target: string, actions: SetupAction[]
     const sPath = join(source, entry.name);
     const tPath = join(target, entry.name);
     if (entry.isDirectory()) {
-      copyDirRecursive(sPath, tPath, actions, dryRun);
+      copyDirRecursive(sPath, tPath, actions, dryRun, force);
     } else if (entry.isFile()) {
       if (existsSync(tPath)) {
-        actions.push({ source: sPath, target: tPath, kind: "skip-exists" });
+        // Identical → always skip. Differs → skip unless forced (the CLI offers
+        // an override prompt), so updated bundled skills can actually propagate.
+        if (filesEqual(sPath, tPath)) {
+          actions.push({ source: sPath, target: tPath, kind: "skip-exists" });
+          continue;
+        }
+        if (!force) {
+          actions.push({ source: sPath, target: tPath, kind: "skip-changed" });
+          continue;
+        }
+        if (!dryRun) {
+          mkdirSync(dirname(tPath), { recursive: true });
+          copyFileSync(sPath, tPath);
+        }
+        actions.push({ source: sPath, target: tPath, kind: "update" });
         continue;
       }
       if (!dryRun) {
@@ -180,17 +213,18 @@ export function installUserHooks(options: SetupOptions = {}): { actions: SetupAc
 export function runSetup(options: SetupOptions = {}): SetupResult {
   const paths = resolveCopilotPaths(options);
   const dryRun = Boolean(options.dryRun);
+  const force = Boolean(options.force);
   const scope = options.scope ?? "project";
   const actions: SetupAction[] = [];
 
   const bundleSkills = join(paths.pluginRoot, ".github", "skills");
   if (relative(bundleSkills, paths.projectScopeSkills) !== "") {
-    copyDirRecursive(bundleSkills, paths.projectScopeSkills, actions, dryRun);
+    copyDirRecursive(bundleSkills, paths.projectScopeSkills, actions, dryRun, force);
   }
 
   const bundleAgents = join(paths.pluginRoot, ".github", "agents");
   if (relative(bundleAgents, paths.projectScopeAgents) !== "") {
-    copyDirRecursive(bundleAgents, paths.projectScopeAgents, actions, dryRun);
+    copyDirRecursive(bundleAgents, paths.projectScopeAgents, actions, dryRun, force);
   }
 
   ensureFile(paths.copilotInstructions, COPILOT_INSTRUCTIONS_TEMPLATE, actions, dryRun);
@@ -205,6 +239,10 @@ export function formatSetup(result: SetupResult): string {
   const lines = [`${prefix}: omp setup (scope=${result.scope})`];
   for (const action of result.actions) {
     lines.push(`  [${action.kind}] ${action.target}`);
+  }
+  const changed = result.actions.filter((a) => a.kind === "skip-changed").length;
+  if (changed > 0) {
+    lines.push(`${changed} bundled file(s) differ from your local copies — re-run with --force to override.`);
   }
   return lines.join("\n");
 }

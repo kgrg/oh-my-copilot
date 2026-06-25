@@ -81,6 +81,43 @@ describe("runSetup", () => {
     expect(existsSync(path.join(project, ".omp", "state"))).toBe(true);
   });
 
+  it("reports skip-changed (not skip-exists) when a bundled skill differs, and does not overwrite", () => {
+    const project = tempProject();
+    const plugin = tempPlugin();
+    const localSkill = path.join(project, ".github", "skills", "hello", "SKILL.md");
+    mkdirSync(path.dirname(localSkill), { recursive: true });
+    writeFileSync(localSkill, "LOCAL EDIT", "utf8");
+
+    const result = runSetup({ cwd: project, pluginRoot: plugin, copilotHome: tempHome() });
+    const action = result.actions.find((a) => a.target === localSkill);
+    expect(action?.kind).toBe("skip-changed");
+    expect(readFileSync(localSkill, "utf8")).toBe("LOCAL EDIT"); // untouched
+  });
+
+  it("skips an identical bundled skill as skip-exists", () => {
+    const project = tempProject();
+    const plugin = tempPlugin();
+    const localSkill = path.join(project, ".github", "skills", "hello", "SKILL.md");
+    mkdirSync(path.dirname(localSkill), { recursive: true });
+    writeFileSync(localSkill, readFileSync(path.join(plugin, ".github", "skills", "hello", "SKILL.md"), "utf8"));
+
+    const result = runSetup({ cwd: project, pluginRoot: plugin, copilotHome: tempHome() });
+    expect(result.actions.find((a) => a.target === localSkill)?.kind).toBe("skip-exists");
+  });
+
+  it("--force overrides a changed bundled skill with the bundled content", () => {
+    const project = tempProject();
+    const plugin = tempPlugin();
+    const localSkill = path.join(project, ".github", "skills", "hello", "SKILL.md");
+    mkdirSync(path.dirname(localSkill), { recursive: true });
+    writeFileSync(localSkill, "LOCAL EDIT", "utf8");
+
+    const result = runSetup({ cwd: project, pluginRoot: plugin, copilotHome: tempHome(), force: true });
+    const action = result.actions.find((a) => a.target === localSkill);
+    expect(action?.kind).toBe("update");
+    expect(readFileSync(localSkill, "utf8")).toContain("Says hello"); // bundled content restored
+  });
+
   it("preserves existing copilot-instructions.md", () => {
     const project = tempProject();
     const plugin = tempPlugin();

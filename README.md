@@ -157,7 +157,7 @@ flowchart TB
 ### Intelligent Orchestration
 
 - **7 specialized agents** — planner, architect, executor, verifier, code-reviewer, designer, researcher (all `--agent <name>` compatible with Copilot CLI)
-- **22 in-session skills** auto-discovered from `.github/skills/`
+- **26 in-session skills** auto-discovered from `.github/skills/`
 - **Smart pipeline routing** — `/research-codebase` → `/ralplan` → `/team` / `/ralph` / `/ultrawork` → `/code-review` → `/ultraqa`
 
 ### Developer Experience
@@ -189,16 +189,20 @@ These run **inside a Copilot CLI session** after the plugin is installed.
 | `/debug`                | Disciplined diagnose-reproduce-fix loop                   | `/debug "flaky integration test"`                    |
 | `/tdd`                  | Red-green-refactor cycle                                  | `/tdd "add pagination to /users"`                    |
 | `/verify`               | Exercise a change end-to-end                              | `/verify`                                            |
+| `/qa-browse`            | Drive a real browser to QA a web flow                     | `/qa-browse "checkout flow"`                         |
+| `/verify-byok`          | End-to-end omp verification — static gate + live BYOK run | `/verify-byok`                                       |
 | `/create-skill`         | Author a new skill                                        | `/create-skill`                                      |
 | `/self-evolve`          | Extract a learned skill from this session                 | `/self-evolve`                                       |
 | `/jira-ticket`          | Render or apply a Jira ticket payload                     | `/jira-ticket`                                       |
 | `/prototype`            | Throwaway prototype to flesh out a design                 | `/prototype "state shape"`                           |
 | `/grill-me`             | Stress-test a plan with Socratic questions                | `/grill-me`                                          |
 | `/caveman`              | Ultra-compressed communication mode                       | `/caveman`                                           |
+| `/ponytail`             | Lazy senior-dev mode — simplest solution that works (YAGNI) | `/ponytail`                                         |
 | `/worktree`             | Git worktree-based parallel branch work                   | `/worktree`                                          |
 | `/schedule`             | Durable local cron job — re-runs a prompt on a schedule, survives reboot | `/schedule "check the PR every 15 min"`   |
 | `/goal`                 | Set/read the repo-level goal injected into the managed Copilot context | `/goal "ship v1.0 of the billing flow"` |
 | `/daily-log`            | Per-day goal + work log surfaced at the start of new sessions | `/daily-log "ratelimit refactor landed"`        |
+| `/slack`                | One-way outbound Slack notification (explicit command only) | `/slack "deploy is green"`                         |
 
 ---
 

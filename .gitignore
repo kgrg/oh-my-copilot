@@ -14,3 +14,8 @@ coverage/
 .env.*
 !.env.example
 *.env
+
+# omp:memory-review:start
+.omp/
+.oh-my-copilot/
+# omp:memory-review:end

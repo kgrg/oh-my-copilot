@@ -258,13 +258,46 @@ Notes:
 
 ---
 
+## Memory mode (opt-in learning loop)
+
+Off by default. When on, a **cheap model reviews each session's transcript when it ends** and writes durable **notes**, gated **directives**, and **skill drafts** under `.omp/`, which get injected into the *next* session's `copilot-instructions.md` — so Copilot starts smarter over time. The expensive reasoning already happened in your main session; the review just distills it.
+
+**Enable it:**
+
+```bash
+omp config set memory-mode on        # interactive: probes models, lets you pick one, validates it
+omp config get                       # memory-mode=on, review model, min-messages
+```
+
+`memory-mode on` is a user-level preference written to the **global** `~/.omp/config.json` (applies everywhere). Interactively it probes which models your plan can run and lets you pick; non-interactively it validates the default (`gpt-5-mini`) and rejects an unavailable one (use `--no-validate` to skip, `--model <slug>` to preset).
+
+**Pick / discover a review model:**
+
+```bash
+omp models                           # probe which Copilot models your plan can actually run (✓/✗/?)
+omp config set memory-review-model claude-haiku-4.5   # change the reviewer (default gpt-5-mini)
+```
+
+There's no headless "list models" in Copilot CLI, so `omp models` discovers availability by **probing** — which also reflects BYOK. The review runs on a cheap model because the expensive work is already done.
+
+**How it fires:** end-of-session is detected by the `sessionEnd` hook (installed into `~/.copilot/hooks/` by `omp setup` / `omp update` / first-run `omp`). To check or force it:
+
+```bash
+omp doctor --deep                    # verifies the configured review model is reachable
+omp memory-review --session latest   # run the review manually (also runs automatically on exit)
+```
+
+Disable any time with `omp config set memory-mode off`. Full details: [docs/memory-mode.md](docs/memory-mode.md).
+
+---
+
 ## Terminal CLI
 
 ```bash
 omp --help
 omp version                                 # prints version; in a TTY, offers to self-update if one is available
 omp update                                  # self-update the CLI (npm) + refresh the Copilot plugin
-omp doctor                                  # verify install + copilot binary
+omp doctor [--deep]                         # verify install + copilot binary (--deep also probes the configured memory-review model)
 omp list                                    # show discovered skills and agents
 omp setup [--dry-run] [--scope project|user]
 omp launch -- [copilot flags…]              # forward arbitrary args to copilot
@@ -293,6 +326,12 @@ omp schedule open <id> [--tmux]             # print this id's latest status + fu
 omp schedule run-now <id>                   # trigger one run immediately
 omp schedule remove <id>                    # uninstall the OS entry + delete the job
 omp goal set "<objective>" | read [--json]
+omp config get [--json]                     # show memory-mode, review model, min-messages
+omp config set memory-mode on|off [--no-validate] [--model <slug>]   # enable/disable the end-of-session learning loop (writes global ~/.omp)
+omp config set memory-review-model <slug>   # which cheap model reviews sessions (default gpt-5-mini)
+omp config set memory-review-min-messages N # skip review for sessions shorter than N messages (default 4)
+omp models [--candidates a,b,c] [--json]    # probe which Copilot models your plan can actually run
+omp memory-review --session <uuid|latest>   # run the end-of-session review manually
 omp memory sync [--json]                    # render goal + directives into copilot-instructions.md
 omp daily-log set-goal "<text>" | add "<text>" | read [--days N] | prune [--keep-days N] [--json]
 omp state write <key> <val> [--ttl <s>] | read | delete | status <key> | list | cleanup [--json]

@@ -221,10 +221,11 @@ both in-session via the skill and from the shell.
 # Shell — default roster from .omp/config.json (or built-in default)
 omp council "Should we adopt a monorepo? One paragraph."
 
-# Pick the roster inline (model:role:weight, or bare models with default roles)
+# Run `omp models` first to see which slugs your plan can actually use,
+# then pick the roster inline (model:role:weight, or bare models with default roles)
 omp council "Is this migration safe?" \
-  --models "gpt-5-mini:critic:1.5,gpt-4.1:architect:1" \
-  --synth gpt-4.1 --json
+  --models "gpt-5-mini:critic:1.5,claude-sonnet-4.6:architect:1" \
+  --synth gpt-5-mini --json
 
 # Feed a diff/file as shared context and an evaluation rubric
 omp council "Review this change for blockers" --context @diff.txt --rubric @rubric.md
@@ -234,20 +235,21 @@ In-session, just ask:
 
 ```
 /weighted-consensus "Should this service use gRPC or REST?"
-/weighted-consensus "Compare these two caching strategies" --models gpt-5-mini,gpt-4.1
+/weighted-consensus "Compare these two caching strategies" --models gpt-5-mini,claude-sonnet-4.6
 ```
 
-Configure the default roster in `.omp/config.json`:
+Configure the default roster in `.omp/config.json` (run `omp models` first to see
+which slugs your plan supports):
 
 ```json
 {
   "council": {
-    "synthesizer": "gpt-4.1",
+    "synthesizer": "gpt-5-mini",
     "minSurvivors": 2,
     "maxConcurrency": 4,
     "members": [
       { "model": "gpt-5-mini", "role": "critic", "weight": 0.4 },
-      { "model": "gpt-4.1", "role": "architect", "weight": 0.35 },
+      { "model": "claude-sonnet-4.6", "role": "architect", "weight": 0.35 },
       { "model": "gpt-5-mini", "role": "pragmatist", "weight": 0.25 }
     ]
   }
